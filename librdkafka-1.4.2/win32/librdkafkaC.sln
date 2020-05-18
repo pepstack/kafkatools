@@ -1,0 +1,67 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "librdkafkaC", "librdkafkaC.vcxproj", "{4BEBB59C-477B-4F7A-8AE8-4228D0861E54}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kafkatools", "..\..\win32\kafkatools.vcxproj", "{6677B113-A04D-4FCC-8C2A-63805DABAD47}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4BEBB59C-477B-4F7A-8AE8-4228D0861E54} = {4BEBB59C-477B-4F7A-8AE8-4228D0861E54}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "consume", "..\..\win32\consume.vcxproj", "{46D6FD5A-49BF-4430-9C0A-0772E4FD8F3F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6677B113-A04D-4FCC-8C2A-63805DABAD47} = {6677B113-A04D-4FCC-8C2A-63805DABAD47}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "produce", "..\..\win32\produce.vcxproj", "{2CA8BD04-D8EB-4844-9F6A-AD9355C9910E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6677B113-A04D-4FCC-8C2A-63805DABAD47} = {6677B113-A04D-4FCC-8C2A-63805DABAD47}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4BEBB59C-477B-4F7A-8AE8-4228D0861E54}.Debug|x64.ActiveCfg = Debug|x64
+		{4BEBB59C-477B-4F7A-8AE8-4228D0861E54}.Debug|x64.Build.0 = Debug|x64
+		{4BEBB59C-477B-4F7A-8AE8-4228D0861E54}.Debug|x86.ActiveCfg = Debug|Win32
+		{4BEBB59C-477B-4F7A-8AE8-4228D0861E54}.Debug|x86.Build.0 = Debug|Win32
+		{4BEBB59C-477B-4F7A-8AE8-4228D0861E54}.Release|x64.ActiveCfg = Release|x64
+		{4BEBB59C-477B-4F7A-8AE8-4228D0861E54}.Release|x64.Build.0 = Release|x64
+		{4BEBB59C-477B-4F7A-8AE8-4228D0861E54}.Release|x86.ActiveCfg = Release|Win32
+		{4BEBB59C-477B-4F7A-8AE8-4228D0861E54}.Release|x86.Build.0 = Release|Win32
+		{6677B113-A04D-4FCC-8C2A-63805DABAD47}.Debug|x64.ActiveCfg = Debug|x64
+		{6677B113-A04D-4FCC-8C2A-63805DABAD47}.Debug|x64.Build.0 = Debug|x64
+		{6677B113-A04D-4FCC-8C2A-63805DABAD47}.Debug|x86.ActiveCfg = Debug|Win32
+		{6677B113-A04D-4FCC-8C2A-63805DABAD47}.Debug|x86.Build.0 = Debug|Win32
+		{6677B113-A04D-4FCC-8C2A-63805DABAD47}.Release|x64.ActiveCfg = Release|x64
+		{6677B113-A04D-4FCC-8C2A-63805DABAD47}.Release|x64.Build.0 = Release|x64
+		{6677B113-A04D-4FCC-8C2A-63805DABAD47}.Release|x86.ActiveCfg = Release|Win32
+		{6677B113-A04D-4FCC-8C2A-63805DABAD47}.Release|x86.Build.0 = Release|Win32
+		{46D6FD5A-49BF-4430-9C0A-0772E4FD8F3F}.Debug|x64.ActiveCfg = Debug|x64
+		{46D6FD5A-49BF-4430-9C0A-0772E4FD8F3F}.Debug|x64.Build.0 = Debug|x64
+		{46D6FD5A-49BF-4430-9C0A-0772E4FD8F3F}.Debug|x86.ActiveCfg = Debug|Win32
+		{46D6FD5A-49BF-4430-9C0A-0772E4FD8F3F}.Debug|x86.Build.0 = Debug|Win32
+		{46D6FD5A-49BF-4430-9C0A-0772E4FD8F3F}.Release|x64.ActiveCfg = Release|x64
+		{46D6FD5A-49BF-4430-9C0A-0772E4FD8F3F}.Release|x64.Build.0 = Release|x64
+		{46D6FD5A-49BF-4430-9C0A-0772E4FD8F3F}.Release|x86.ActiveCfg = Release|Win32
+		{46D6FD5A-49BF-4430-9C0A-0772E4FD8F3F}.Release|x86.Build.0 = Release|Win32
+		{2CA8BD04-D8EB-4844-9F6A-AD9355C9910E}.Debug|x64.ActiveCfg = Debug|x64
+		{2CA8BD04-D8EB-4844-9F6A-AD9355C9910E}.Debug|x64.Build.0 = Debug|x64
+		{2CA8BD04-D8EB-4844-9F6A-AD9355C9910E}.Debug|x86.ActiveCfg = Debug|Win32
+		{2CA8BD04-D8EB-4844-9F6A-AD9355C9910E}.Debug|x86.Build.0 = Debug|Win32
+		{2CA8BD04-D8EB-4844-9F6A-AD9355C9910E}.Release|x64.ActiveCfg = Release|x64
+		{2CA8BD04-D8EB-4844-9F6A-AD9355C9910E}.Release|x64.Build.0 = Release|x64
+		{2CA8BD04-D8EB-4844-9F6A-AD9355C9910E}.Release|x86.ActiveCfg = Release|Win32
+		{2CA8BD04-D8EB-4844-9F6A-AD9355C9910E}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

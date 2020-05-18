@@ -1,5 +1,9 @@
 # Prerequisites
 *.d
+*.pyc
+*.stackdump
+
+.git/
 
 # Object files
 *.o
@@ -7,23 +11,34 @@
 *.obj
 *.elf
 
+# MS VC files
+*.sdf
+*.opensdf
+*.suo
+*.VC.db
+*.VC.opendb
+
+.vs/
+build/
+target/
+
 # Linker output
 *.ilk
 *.map
 *.exp
+*.iobj
+*.ipdb
 
 # Precompiled Headers
 *.gch
 *.pch
+*.Po
 
 # Libraries
-*.lib
-*.a
 *.la
 *.lo
 
 # Shared objects (inc. Windows DLLs)
-*.dll
 *.so
 *.so.*
 *.dylib
@@ -40,7 +55,6 @@
 *.dSYM/
 *.su
 *.idb
-*.pdb
 
 # Kernel Module Compile Results
 *.mod*
@@ -50,3 +64,20 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Temporary Files
+stamp-h1
+*~
+~*
+*.log
+*.dirstamp
+*.scan
+*.m4
+m4/
+libs/
+local-pkgs/
+.deps/
+.libs/
+autom4te.cache/
+logs/
+
