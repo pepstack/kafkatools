@@ -137,11 +137,11 @@ int main (int argc, char *argv[])
 
         //"p4:0-3",
 
-        "centrum1r2p4:0-3",
+        "test:0-7",
         0
     };
 
-    ret = kafkatools_consumer_create("test_group211", "192.168.39.111:9092", 256, names, values, topics, NULL, &consumer);
+    ret = kafkatools_consumer_create("mytest_group2", "192.168.39.111:9092", 256, names, values, topics, NULL, &consumer);
 
     if (ret == KAFKATOOLS_SUCCESS) {
         const char * tpnames[] = {
@@ -163,7 +163,7 @@ int main (int argc, char *argv[])
             exit(-1);
         }
 
-        kt_topic rktopic = kafkatools_consumer_get_topic(consumer, "centrum1r2p4", topic_conf);
+        kt_topic rktopic = kafkatools_consumer_get_topic(consumer, "test", topic_conf);
         if (! rktopic) {
             printf("kafkatools_consumer_get_topic failed: %s\n", kafkatools_consumer_get_errstr(consumer, 0));
             exit(-1);
@@ -182,8 +182,8 @@ int main (int argc, char *argv[])
             printf("rd_kafka_committed failed: %s\n", rd_kafka_err2str(err));
         }
 
-        int partitionid = 1;
-        int64_t offsetln = -1;
+        int partitionid = 0;    //  = 1 no msg
+        int64_t offsetln = RD_KAFKA_OFFSET_BEGINNING;
 
         err = rd_kafka_consume_start(rktopic, partitionid, offsetln);
         if (err) {

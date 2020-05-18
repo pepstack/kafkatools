@@ -9,6 +9,8 @@
  */
 #include "kafkatools.h"
 
+#define MYTOPIC  "test"
+
 
 static void produce_msg_cb (rd_kafka_t *rk, const rd_kafka_message_t *rkmessage, void *opaque)
 {
@@ -16,7 +18,7 @@ static void produce_msg_cb (rd_kafka_t *rk, const rd_kafka_message_t *rkmessage,
 
     if (rkmessage->err != RD_KAFKA_RESP_ERR_NO_ERROR) {
         printf("[%ju] message delivery failed: %s.\n", id, rd_kafka_err2str(rkmessage->err));
-    } else if (id % 10000 == 0) {
+    } else {
         if (rkmessage->key_len) {
             printf("produce success on (topic=%s partition=%d %zd bytes): msg={%.*s} key=<%.*s>\n",
                 rd_kafka_topic_name(rkmessage->rkt),
@@ -67,6 +69,8 @@ static void produce_messages (kt_producer producer, kafkatools_msg_site_t *site,
 
             break;
         }
+
+        printf("<%.*s>: {%.*s}\n", (int)msg.keylen, msg.key, (int)msg.msglen, msg.msgbuf);
 
         ++id;
     }
@@ -120,12 +124,13 @@ int main (int argc, char *argv[])
             exit(-1);
         }
 
-        site.topic = kafkatools_producer_get_topic(producer, "test");
+        site.topic = kafkatools_producer_get_topic(producer, MYTOPIC);
         site.partition = 0;
 
         produce_messages(producer, &site, startid, maxcount);
 
-        kafkatools_producer_destroy(producer, KAFKATOOLS_WAIT_INFINITE);
+        Sleep(10000);
+        //?? kafkatools_producer_destroy(producer, KAFKATOOLS_WAIT_INFINITE);
     } while(0);
 
     return 0;
