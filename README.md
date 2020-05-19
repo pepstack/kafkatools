@@ -43,4 +43,12 @@ A C wrapper for librdkafka.
 
 ## Build librdkafka for Linux Server
 
-see README.md in ./deps folder.
+-- Build Dependencies for Linux
+
+See README.md in ./deps folder.
+
+-- Build libkakfkatools.so
+
+    $ make
+
+Generated libkakfkatools.so will be found in ./target

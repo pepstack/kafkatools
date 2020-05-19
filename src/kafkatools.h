@@ -56,9 +56,13 @@ extern "C" {
 /**
  * The C API is also documented in rdkafka.h
  */
-#include <rdkafka.h>
-
 #include <common/unitypes.h>
+
+#ifdef __WINDOWS__
+# include <rdkafka.h>
+#else
+# include <librdkafka/rdkafka.h>
+#endif
 
 /* using pthread or pthread-w32 */
 #include <sched.h>

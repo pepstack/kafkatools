@@ -93,8 +93,6 @@ int kafkatools_consumer_create (const char *groupid, const char *brokers, int tp
 
     kafkatools_consumer_t * consumer = 0;
 
-    int init_tree = 0;
-
     result = KAFKATOOLS_ENOMEM;
 
     consumer = (kafkatools_consumer_t *) mem_alloc_zero(1, sizeof(*consumer));
