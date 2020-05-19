@@ -6,7 +6,7 @@ GCC: 6.4.0
 
     If not gcc-6.x, you should upgrade gcc/g++ first. see also:
     
-    [UPDATE GCC On RHEL6 (x64)](https://github.com/pepstack/update-gcc-el6)
+[UPDATE GCC On RHEL6 (x64)](https://github.com/pepstack/update-gcc-el6)
 
     If you are using rhel7.x or others with GCC 6.x+, Please ignore above notes.
 

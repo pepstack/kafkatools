@@ -23,6 +23,10 @@ A C wrapper for librdkafka.
 
 - zstd-20200519.tar.gz
 
+[Zstandard - Fast real-time compression algorithm](http://www.zstd.net)
+
+[Zstandard - github](https://github.com/facebook/zstd)
+
     Open ./deps/zstd/build/VS2015/zstd.sln with vs2015, and build all targets.
 
     也可以用 vs2015 直接打开 ./deps/zstd/build/VS2010/zstd.sln，编译。
