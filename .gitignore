@@ -5,6 +5,8 @@
 
 .git/
 
+./libs/
+
 # Object files
 *.o
 *.ko
