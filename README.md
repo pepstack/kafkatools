@@ -11,7 +11,7 @@ A C wrapper for librdkafka.
     但是，kafkatools 已经成功应用在 Windows 和 Linux 项目中。
 
 
-## Dependencies
+## Prepare Dependencies for Windows
 
 - librdkafka-1.4.2
 
@@ -22,7 +22,7 @@ A C wrapper for librdkafka.
 [POSIX Threads for Windows](https://sourceforge.net/projects/pthreads4w/files/latest/download)
 
 
-## Build librdkafka with vs2015
+## Build librdkafka with vs2015 for Windows
 
 - Downloads openssl devel libs for Windows to build librdkafka
 
@@ -34,16 +34,13 @@ A C wrapper for librdkafka.
 
     OpenSSL-1.1.1g-Devel-Win
 
-- Build librdkafkaC project
-
-
-## Build kafkatools with vs2015
-
-- Load 'librdkafka-1.4.2/win32/librdkafkaC.sln' with vs2015
-
 - Build all projects
 
 	librdkafka     - dll
 	kafkatools     - static lib
 	consume        - console exe
 	produce        - console exe
+
+## Build librdkafka for Linux Server
+
+see README.md in ./deps folder.
