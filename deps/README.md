@@ -47,9 +47,13 @@ GNU Make 3.81
 
     $ git clone git@github.com:facebook/zstd.git
 
-    TODO:
+Failed compile on el6. Success compile on el7.
 
-        how to build
+On centos 7.x (gcc-4.8.5), enter zstd/, and compile:
+
+    $ make          -- compile zstd command tool only.
+
+    $ make lib      -- compile libzstd.so, libzstd.a
 
 
 ## librdkafka-1.4.2
@@ -66,6 +70,23 @@ Create a build config shell script file under librdkafka-1.4.2 folder as below:
     --enable-zlib \
     --enable-ssl \
     --enable-gssapi \
+    --disable-syslog
+```
+
+For centos 7.x with gcc-4.8.5 (NOT test):
+
+```
+    # buildconfig.sh
+    #   configure how to build librdkafka
+    STATIC_LIB_zlib=/path/to/kafkatools/libs/lib/libz.a \
+    STATIC_LIB_libcrypto=/path/to/kafkatools/libs/lib/libcrypto.a \
+    STATIC_LIB_libssl=/path/to/kafkatools/libs/lib/libssl.a \
+    STATIC_LIB_libzstd=/path/to/kafkatools/libs/lib/libzstd.a \
+    ./configure --prefix=/path/to/kafkatools/libs \
+    --enable-zlib \
+    --enable-ssl \
+    --enable-gssapi \
+    --enable-zstd \
     --disable-syslog
 ```
 

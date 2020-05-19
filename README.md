@@ -21,6 +21,13 @@ A C wrapper for librdkafka.
 
 [POSIX Threads for Windows](https://sourceforge.net/projects/pthreads4w/files/latest/download)
 
+- zstd-20200519.tar.gz
+
+    Open ./deps/zstd/build/VS2015/zstd.sln with vs2015, and build all targets.
+
+    也可以用 vs2015 直接打开 ./deps/zstd/build/VS2010/zstd.sln，编译。
+
+    VS2015/zstd.sln是我转换后的工程。/MD 以 /MT 替代。
 
 ## Build librdkafka with vs2015 for Windows
 
