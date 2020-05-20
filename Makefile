@@ -26,7 +26,7 @@ all: $(bintarget)
 	-cp $(bintarget) $(prefix)/target/
 	-ln -sf $(bintarget) $(prefix)/target/$(binsoname)
 
-$(bintarget): kafkatools_consumer.o kafkatools_producer.o red_black_tree.o readconf.o
+$(bintarget): kafkatools_consumer.o kafkatools_producer.o red_black_tree.o readconf.o misc.o
 	$(CC) $(CFLAGS) -shared \
 		-Wl,--soname=$(binsoname) \
 		-Wl,--rpath='$(prefix):$(prefix)/lib:$(prefix)/libs/lib' \
@@ -46,11 +46,16 @@ red_black_tree.o: $(SRC_DIR)/common/red_black_tree.c
 readconf.o: $(SRC_DIR)/common/readconf.c
 	$(CC) $(CFLAGS) $(INC_DIRS) -c $(SRC_DIR)/common/readconf.c -o $@
 
+misc.o: $(SRC_DIR)/common/misc.c
+	$(CC) $(CFLAGS) $(INC_DIRS) -c $(SRC_DIR)/common/misc.c -o $@
+
+
 clean:
 	-rm -f $(prefix)/kafkatools_consumer.o
 	-rm -f $(prefix)/kafkatools_producer.o
 	-rm -f $(prefix)/red_black_tree.o
 	-rm -f $(prefix)/readconf.o
+	-rm -f $(prefix)/misc.o
 	-rm -f $(prefix)/$(bintarget)
 	-rm -f $(prefix)/target/$(binsoname)
 	-rm -f $(prefix)/target/$(bintarget)

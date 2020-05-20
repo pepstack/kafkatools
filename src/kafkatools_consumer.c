@@ -37,7 +37,11 @@
 #include <common/red_black_tree.h>
 #include <common/readconf.h>
 #include <common/memapi.h>
+#include <common/misc.h>
+#include <common/cstrbuf.h>
 
+
+static const char THIS_FILE[] = "kafkatools_consumer.c";
 
 /**
  * API doc:

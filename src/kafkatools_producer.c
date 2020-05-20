@@ -41,6 +41,10 @@
 #include <common/red_black_tree.h>
 #include <common/readconf.h>
 #include <common/memapi.h>
+#include <common/misc.h>
+#include <common/cstrbuf.h>
+
+static const char THIS_FILE[] = "kafkatools_producer.c";
 
 
 typedef struct kafkatools_producer_t
@@ -86,16 +90,158 @@ static void rktopic_object_release(void *object, void *param)
  */
 static void kt_msg_cb_default (rd_kafka_t *rk, const rd_kafka_message_t *rkmessage, void *opaque) {
     if (rkmessage->err != RD_KAFKA_RESP_ERR_NO_ERROR) {
-        printf("error: Message delivery failed: %s\n", rd_kafka_err2str(rkmessage->err));
+        printf("[error] Message delivery failed: %s\n", rd_kafka_err2str(rkmessage->err));
     } else {
         // printf("success: Message delivered (%zd bytes, partition %"PRId32")\n", rkmessage->len, rkmessage->partition);
     }
 }
 
 
+static cstrbuf kt_get_producer_properties_pathfile (const char *propspathfile)
+{
+    cstrbuf propsfile = 0;
+    cstrbuf bindir = get_proc_abspath();
+
+    if (! propspathfile) {
+        // using default file
+        propsfile = cstrbufCat(0, "%.*s%ckafka-producer.properties",
+                    cstrbufGetLen(bindir), cstrbufGetStr(bindir), PATH_SEPARATOR_CHAR);
+        cstrbufFree(&bindir);
+        return propsfile;
+    }
+
+    if (propspathfile[0] == '.' && (propspathfile[1] == PATH_SEPARATOR_CHAR || propspathfile[1] == '/')) {
+        // current app dir:
+        //   "./config/kafka-producer.properties"
+        propsfile = cstrbufCat(0, "%.*s%c%.*s", cstrbufGetLen(bindir), cstrbufGetStr(bindir), PATH_SEPARATOR_CHAR,
+                        cstr_length(&propspathfile[2], KAFKATOOLS_PROPSFILE_LEN_MAX), &propspathfile[2]);
+        cstrbufFree(&bindir);
+        return propsfile;
+    }
+
+    if (propspathfile[0] == '.' && propspathfile[1] == '.' && (propspathfile[2] == PATH_SEPARATOR_CHAR || propspathfile[2] =='/')) {
+        // parent dir:
+        //   "../config/kafka-producer.properties"
+        propsfile = cstrbufCat(0, "%.*s%c%.*s",
+                    cstrbufGetLen(bindir), cstrbufGetStr(bindir), PATH_SEPARATOR_CHAR,
+                    cstr_length(propspathfile, KAFKATOOLS_PROPSFILE_LEN_MAX), propspathfile);
+        cstrbufFree(&bindir);
+        return propsfile;
+    }
+
+    // absolute path
+    cstrbufFree(&bindir);
+    propsfile = cstrbufCat(0, "%.*s", cstr_length(propspathfile, KAFKATOOLS_PROPSFILE_LEN_MAX), propspathfile);
+    return propsfile;
+}
+
+
 /**********************************************************
  * public api
  **********************************************************/
+
+/**
+ * high level api for kafka producer
+ */
+int kafkatools_producer_state_init (const char *propertiesfile, const char *topicpartitions, kafkatools_msg_cb statecb, void *argp, ktproducer_state_t *state)
+{
+    int ret;
+
+    char *propsbuf = 0;
+    size_t bufsize = 0;
+
+    char *propnames[KAFKATOOLS_CONF_PROPS_MAX] = {0};
+    char *propvalues[KAFKATOOLS_CONF_PROPS_MAX] = {0};
+
+    cstrbuf propsfile = kt_get_producer_properties_pathfile(propertiesfile);
+    cstrbuf topicpt = cstrbufNew(0, topicpartitions, -1);
+
+    char *topicptsplit[2] = {0};
+
+    if (! pathfile_exists(cstrbufGetStr(propsfile))) {
+        printf("(%s:%d) ERROR -  properties file not found: '%.*s'\n",  THIS_FILE, __LINE__,
+            cstrbufGetLen(propsfile), cstrbufGetStr(propsfile));
+
+        cstrbufFree(&propsfile);
+        cstrbufFree(&topicpt);
+        return KAFKATOOLS_EFILE;
+    }
+
+    ret = kafkatools_props_readconf(cstrbufGetStr(propsfile), cstrbufGetStr(topicpt), &propsbuf, &bufsize);
+    cstrbufFree(&propsfile);
+
+    if (kafkatools_props_retrieve(propsbuf, bufsize, propnames, propvalues, ret) != KAFKATOOLS_SUCCESS) {
+        printf("(%s:%d) ERROR - kafkatools_props_retrieve failed.\n", THIS_FILE, __LINE__);
+        cstrbufFree(&topicpt);
+        kafkatools_propsbuf_free(propsbuf);
+        return KAFKATOOLS_EPROPS;
+    }
+
+    // create producer for kafka
+    state->statearg = argp;
+    ret = kafkatools_producer_create(propnames, propvalues, statecb, (void *)state, &state->producer);
+    if (ret != KAFKATOOLS_SUCCESS) {
+        printf("(%s:%d) ERROR - kafkatools_producer_create failed.\n", THIS_FILE, __LINE__);
+        cstrbufFree(&topicpt);
+        kafkatools_propsbuf_free(propsbuf);
+        return KAFKATOOLS_ERROR;
+    }
+    kafkatools_propsbuf_free(propsbuf);
+
+    // parse topic and partitions
+    ret = cstr_split_substr(topicpt->str, ":", 1, topicptsplit, 2);
+    if (ret == 1) {
+        // only topic without partition
+        state->site.topic = kafkatools_producer_get_topic(state->producer, topicpt->str);
+
+        state->site.partition = state->site.partitionid_min = state->site.partitionid_max = 0;
+    } else if (ret == 2) {
+        state->site.topic = kafkatools_producer_get_topic(state->producer, topicptsplit[0]);
+
+        if (strchr(topicptsplit[1], '-')) {
+            char *maxpartid = strchr(topicptsplit[1], '-');
+            *maxpartid++ = 0;
+            state->site.partitionid_min = atoi(topicptsplit[1]);
+            state->site.partitionid_max = atoi(maxpartid);
+        } else {
+            // only one partition
+            state->site.partition = state->site.partitionid_min = state->site.partitionid_max = atoi(topicptsplit[1]);
+        }
+    } else {
+        printf("(%s:%d) ERROR - invalid topic partitions: '%.*s'\n", THIS_FILE, __LINE__,
+            cstrbufGetLen(topicpt), cstrbufGetStr(topicpt));
+
+        cstrbufFree(&topicpt);
+        return KAFKATOOLS_EFATAL;
+    }
+
+    // validate state topic partitions
+    if (! state->site.topic ||
+        state->site.partitionid_max < state->site.partitionid_min ||
+        state->site.partitionid_min < 0 ||
+        state->site.partitionid_max > KAFKATOOLS_PARTITIONID_MAX) {
+        printf("(%s:%d) ERROR - bad topic partitions: '%.*s'\n", THIS_FILE, __LINE__,
+            cstrbufGetLen(topicpt), cstrbufGetStr(topicpt));
+
+        cstrbufFree(&topicpt);
+        return KAFKATOOLS_EARG;
+    }
+
+    cstrbufFree(&topicpt);
+    return KAFKATOOLS_SUCCESS;
+}
+
+
+void kafkatools_producer_state_uninit (ktproducer_state_t *state)
+{
+    // TODO:
+    //why error: kafkatools_producer_destroy(state->producer, KAFKATOOLS_WAIT_INFINITE);
+}
+
+
+/**
+ * public helper api
+ */
 const char * kafkatools_get_rdkafka_version (void)
 {
     return rd_kafka_version_str();
@@ -114,9 +260,6 @@ void kafkatools_mutex_unlock (pthread_mutex_t * mutex)
 }
 
 
-/**
- * public helper api
- */
 int kafkatools_props_readconf (const char *conf_file, const char *section, char **propsbuf, size_t *bufsz)
 {
     char *sec, *key, *val, *outbuf;
@@ -510,3 +653,4 @@ int kafkatools_produce_timedwait (kt_producer producer, kafkatools_msg_site_t *k
 
     return KAFKATOOLS_SUCCESS;
 }
+

@@ -84,8 +84,10 @@ extern "C" {
 #define KAFKATOOLS_CONF_PROPS_MAX      256
 #define KAFKATOOLS_TOPICS_MAX         1024
 #define KAFKATOOLS_PARTITIONID_MAX    4095
-#define KAFKATOOLS_TOPIC_NAMELEN       255
+#define KAFKATOOLS_TOPIC_NAMELEN       127
 #define KAFKATOOLS_ERRSTR_SIZE         256
+#define KAFKATOOLS_PROPSFILE_LEN_MAX   255
+
 
 #define KAFKATOOLS_MSG_CB_DEFAULT  ((kafkatools_msg_cb)((void*) (uintptr_t) (int) (-1)))
 
@@ -143,11 +145,28 @@ typedef struct kafkatools_producer_api_t
 } kafkatools_producer_api_t;
 
 
-extern const char * kafkatools_get_rdkafka_version (void);
+/**
+ * high level api for kafka producer
+ */
+typedef struct
+{
+    kt_producer producer;
+    kafkatools_msg_site_t site;
 
-extern int kafkatools_mutex_lock (pthread_mutex_t * mutex, int is_try);
+    void *statearg;
+} ktproducer_state_t;
 
-extern void kafkatools_mutex_unlock (pthread_mutex_t * mutex);
+
+/**
+ * create kafka producer state from properties file
+ *   `propertiesfile` - path file to kafka producer properties
+ *   `topicpartitions` - topic with  partitionid scope like below:
+ *        "$topic:$partitionidMin-$partitionidMax"
+ *        "test:0-63" means topic is test and partitionid scope is [0, 63]
+ */
+extern int kafkatools_producer_state_init (const char *propertiesfile, const char *topicpartitions, kafkatools_msg_cb statecb, void *argp, ktproducer_state_t *state);
+
+extern void kafkatools_producer_state_uninit (ktproducer_state_t *state);
 
 
 /**
@@ -159,6 +178,12 @@ extern int kafkatools_props_readconf (const char *conf_file, const char *section
 extern int kafkatools_props_retrieve (const char *propsbuf, size_t bufsz, char **propnames, char **propvalues, int numprops);
 
 extern void kafkatools_propsbuf_free (char *propsbuf);
+
+extern const char * kafkatools_get_rdkafka_version (void);
+
+extern int kafkatools_mutex_lock (pthread_mutex_t * mutex, int is_try);
+
+extern void kafkatools_mutex_unlock (pthread_mutex_t * mutex);
 
 
 /**
