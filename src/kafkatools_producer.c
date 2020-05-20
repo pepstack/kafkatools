@@ -133,7 +133,7 @@ int kafkatools_props_readconf (const char *conf_file, const char *section, char 
     // calc size for props in section
     sec = ConfGetFirstPair(cpos, &key, &val);
     while (sec) {
-        if (! strcmp(ConfGetSection(cpos), section)) {
+        if (! section || ! strcmp(ConfGetSection(cpos), section)) {
             props++;
             outsz += strlen(key) + 1 + strlen(val) + 1;
         }
@@ -160,7 +160,7 @@ int kafkatools_props_readconf (const char *conf_file, const char *section, char 
     offset = 0;
     sec = ConfGetFirstPair(cpos, &key, &val);
     while (sec) {
-        if (! strcmp(ConfGetSection(cpos), section)) {
+        if (! section || ! strcmp(ConfGetSection(cpos), section)) {
             cb = strlen(key) + 1;
             if (offset + cb > outsz) {
                 mem_free(outbuf);

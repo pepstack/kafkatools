@@ -19,7 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\common\misc.c" />
     <ClCompile Include="..\src\produce.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\kafka-producer.properties" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\common\misc.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2CA8BD04-D8EB-4844-9F6A-AD9355C9910E}</ProjectGuid>

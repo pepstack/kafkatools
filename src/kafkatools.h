@@ -80,11 +80,12 @@ extern "C" {
 #define KAFKATOOLS_EPROPS   (-7)
 #define KAFKATOOLS_EFATAL   (-10)
 
-#define KAFKATOOLS_WAIT_INFINITE   (-1)
-#define KAFKATOOLS_CONF_PROPS_MAX   256
-#define KAFKATOOLS_TOPICS_MAX      1024
-#define KAFKATOOLS_TOPIC_NAMELEN    255
-#define KAFKATOOLS_ERRSTR_SIZE      256
+#define KAFKATOOLS_WAIT_INFINITE      (-1)
+#define KAFKATOOLS_CONF_PROPS_MAX      256
+#define KAFKATOOLS_TOPICS_MAX         1024
+#define KAFKATOOLS_PARTITIONID_MAX    4095
+#define KAFKATOOLS_TOPIC_NAMELEN       255
+#define KAFKATOOLS_ERRSTR_SIZE         256
 
 #define KAFKATOOLS_MSG_CB_DEFAULT  ((kafkatools_msg_cb)((void*) (uintptr_t) (int) (-1)))
 
@@ -104,6 +105,10 @@ typedef struct kafkatools_msg_site_t
 
     /* Use builtin partitioner (RD_KAFKA_PARTITION_UA) to select partition */
     int32_t partition;
+
+    /* constant partitionid scope: [min, max] */
+    int32_t partitionid_min;
+    int32_t partitionid_max;
 } kafkatools_msg_site_t;
 
 
@@ -143,6 +148,7 @@ extern const char * kafkatools_get_rdkafka_version (void);
 extern int kafkatools_mutex_lock (pthread_mutex_t * mutex, int is_try);
 
 extern void kafkatools_mutex_unlock (pthread_mutex_t * mutex);
+
 
 /**
  * helper api
