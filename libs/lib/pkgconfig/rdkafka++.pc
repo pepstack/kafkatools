@@ -1,0 +1,10 @@
+prefix=/root/Workspace/github.com/kafkatools/libs
+libdir=/root/Workspace/github.com/kafkatools/libs/lib
+includedir=/root/Workspace/github.com/kafkatools/libs/include
+
+Name: librdkafka++
+Description: The Apache Kafka C/C++ library
+Version: 1.5.0
+Cflags: -I${includedir}
+Libs: -L${libdir} -lrdkafka++
+Libs.private: -L../src -lrdkafka

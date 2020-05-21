@@ -94,7 +94,7 @@ int main (int argc, char *argv[])
             const char * errstr = kafkatools_producer_get_errstr(thrstate->producer, &err);
             // LOGGER_ERROR(...);
         }
-    } while(0);
+    } while(1);
     ////////////////////////////////////////////////////////////////////////////////
 
     kafkatools_producer_state_uninit(&state, KAFKATOOLS_WAIT_INFINITE);

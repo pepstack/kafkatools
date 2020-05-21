@@ -17,7 +17,7 @@ LIB_DIR = $(prefix)/libs/lib
 
 CFLAGS ?= -std=gnu99 -D_GNU_SOURCE -O3 -Wall -pipe -fPIC -DNDEBUG
 
-LDFLAGS ?= -L$(LIB_DIR) -lrdkafka -lz -lpthread -lrt
+LDFLAGS ?= -L. -L$(LIB_DIR) -lrdkafka -lz -lpthread -lrt
 
 INC_DIRS ?= -I$(prefix)/src -I$(prefix)/libs/include
 
@@ -50,6 +50,14 @@ misc.o: $(SRC_DIR)/common/misc.c
 	$(CC) $(CFLAGS) $(INC_DIRS) -c $(SRC_DIR)/common/misc.c -o $@
 
 
+# produce test app
+produce: $(SRC_DIR)/produce.c
+	$(CC) $(CFLAGS) $(INC_DIRS) $(LDFLAGS) $(SRC_DIR)/produce.c -o $@ \
+	-lkafkatools \
+	-lrdkafka \
+	-lpthread -lrt -lm
+
+    
 clean:
 	-rm -f $(prefix)/kafkatools_consumer.o
 	-rm -f $(prefix)/kafkatools_producer.o
