@@ -30,7 +30,7 @@
  * @author     Liang Zhang <350137278@qq.com>
  * @version    0.0.10
  * @create     2017-08-28 11:12:10
- * @update     2020-04-28 15:20:46
+ * @update     2020-05-21 15:20:46
  */
 #ifndef _CSTRBUF_H_
 #define _CSTRBUF_H_
@@ -1315,6 +1315,8 @@ const char * cstr_timestamp_to_datetime (char *stampms, int mslen, char timestr[
 
 #define cstrbufPrint(s)         printf("%.*s", cstrbufGetLen(s), cstrbufGetStr(s))
 
+#define cstrbufCharAt(s, i)     ((char *)(s->str+(i)))
+
 
 typedef struct _cstrbuf_t
 {
@@ -1329,6 +1331,19 @@ typedef struct _cstrbuf_t
 
     char str[0];
 } cstrbuf_t, *cstrbuf;
+
+
+NOWARNING_UNUSED(static)
+char * cstrbufCharAtSafe(cstrbuf csb, int at)
+{
+    int len = cstrbufGetLen(csb);
+    if (at >= 0 && at < len) {
+        return cstrbufCharAt(csb, at);
+    }
+
+    /* invalid cstrbuf or index */
+    return NULL;
+}
 
 
 NOWARNING_UNUSED(static)

@@ -311,11 +311,13 @@ on_error_result:
 void kafkatools_consumer_destroy (kt_consumer consumer)
 {
     if (consumer) {
+        rd_kafka_t *rkConsumer = NULL;
+
+        pthread_mutex_lock(&consumer->lock);
+
         if (consumer->rkConsumer) {
-            /* Destroy Kafka handle. This is a blocking operation.
-             *   rd_kafka_consumer_close() will be called from this function.
-             */
-            rd_kafka_destroy(consumer->rkConsumer);
+            rkConsumer = consumer->rkConsumer;
+            consumer->rkConsumer = NULL;
         }
 
         if (consumer->tp_list) {
@@ -325,8 +327,14 @@ void kafkatools_consumer_destroy (kt_consumer consumer)
         rbtree_traverse(&consumer->rktopic_tree, rktopic_object_release, 0);
         rbtree_clean(&consumer->rktopic_tree);
 
-        pthread_mutex_destroy(&consumer->lock);
+        if (rkConsumer) {
+            /* Destroy Kafka handle. This is a blocking operation.
+             *   rd_kafka_consumer_close() will be called from this function.
+             */
+            rd_kafka_destroy(rkConsumer);
+        }
 
+        pthread_mutex_destroy(&consumer->lock);
         mem_free(consumer);
     }
 }

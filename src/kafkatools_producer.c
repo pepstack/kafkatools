@@ -99,40 +99,52 @@ static void kt_msg_cb_default (rd_kafka_t *rk, const rd_kafka_message_t *rkmessa
 
 static cstrbuf kt_get_producer_properties_pathfile (const char *propspathfile)
 {
-    cstrbuf propsfile = 0;
+    cstrbuf propsfile = NULL;
     cstrbuf bindir = get_proc_abspath();
+    cstrbuf pathfile = cstrbufCat(0, "%.*s", cstr_length(propspathfile, KAFKATOOLS_PROPSFILE_LEN_MAX), propspathfile);
+    int pathlen = cstrbufGetLen(pathfile);
 
-    if (! propspathfile) {
+    if (pathlen < 2) {
         // using default file
-        propsfile = cstrbufCat(0, "%.*s%ckafka-producer.properties",
-                    cstrbufGetLen(bindir), cstrbufGetStr(bindir), PATH_SEPARATOR_CHAR);
+        propsfile = cstrbufCat(0, "%.*s%c%s", cstrbufGetLen(bindir), cstrbufGetStr(bindir), PATH_SEPARATOR_CHAR, KAFKA_PRODUCER_PROPERTIES_FILE);
+
+        cstrbufFree(&pathfile);
         cstrbufFree(&bindir);
         return propsfile;
     }
 
-    if (propspathfile[0] == '.' && (propspathfile[1] == PATH_SEPARATOR_CHAR || propspathfile[1] == '/')) {
+    if (*cstrbufCharAt(pathfile, pathlen - 1) == PATH_SEPARATOR_CHAR || *cstrbufCharAt(pathfile, pathlen - 1) == '/') {
+        // only dir withnot filename
+        *cstrbufCharAt(pathfile, pathlen - 1) = PATH_SEPARATOR_CHAR;
+        pathfile = cstrbufCat(pathfile, KAFKA_PRODUCER_PROPERTIES_FILE);
+        pathlen = cstrbufGetLen(pathfile);
+    }
+
+    if (*cstrbufCharAt(pathfile, 0) == '.' && (*cstrbufCharAt(pathfile, 1) == PATH_SEPARATOR_CHAR || *cstrbufCharAt(pathfile, 1) == '/')) {
         // current app dir:
         //   "./config/kafka-producer.properties"
-        propsfile = cstrbufCat(0, "%.*s%c%.*s", cstrbufGetLen(bindir), cstrbufGetStr(bindir), PATH_SEPARATOR_CHAR,
-                        cstr_length(&propspathfile[2], KAFKATOOLS_PROPSFILE_LEN_MAX), &propspathfile[2]);
+        propsfile = cstrbufCat(0, "%.*s%c%s", cstrbufGetLen(bindir), cstrbufGetStr(bindir), PATH_SEPARATOR_CHAR, cstrbufCharAt(pathfile, 2));
+
+        cstrbufFree(&pathfile);
         cstrbufFree(&bindir);
         return propsfile;
     }
 
-    if (propspathfile[0] == '.' && propspathfile[1] == '.' && (propspathfile[2] == PATH_SEPARATOR_CHAR || propspathfile[2] =='/')) {
+    if (*cstrbufCharAt(pathfile, 0) == '.' && *cstrbufCharAt(pathfile, 1) == '.' &&
+        (*cstrbufCharAt(pathfile, 2) == PATH_SEPARATOR_CHAR || *cstrbufCharAt(pathfile, 2) =='/')) {
         // parent dir:
         //   "../config/kafka-producer.properties"
-        propsfile = cstrbufCat(0, "%.*s%c%.*s",
-                    cstrbufGetLen(bindir), cstrbufGetStr(bindir), PATH_SEPARATOR_CHAR,
-                    cstr_length(propspathfile, KAFKATOOLS_PROPSFILE_LEN_MAX), propspathfile);
+        propsfile = cstrbufCat(0, "%.*s%c%s", cstrbufGetLen(bindir), cstrbufGetStr(bindir), PATH_SEPARATOR_CHAR, cstrbufGetStr(pathfile));
+
+        cstrbufFree(&pathfile);
         cstrbufFree(&bindir);
         return propsfile;
     }
 
     // absolute path
+    cstrbufFree(&propsfile);
     cstrbufFree(&bindir);
-    propsfile = cstrbufCat(0, "%.*s", cstr_length(propspathfile, KAFKATOOLS_PROPSFILE_LEN_MAX), propspathfile);
-    return propsfile;
+    return pathfile;
 }
 
 
@@ -238,10 +250,9 @@ int kafkatools_producer_state_init (const char *propertiesfile, const char *topi
 }
 
 
-void kafkatools_producer_state_uninit (ktproducer_state_t *state)
+void kafkatools_producer_state_uninit (ktproducer_state_t *state, int wait_ms)
 {
-    // TODO:
-    //why error: kafkatools_producer_destroy(state->producer, KAFKATOOLS_WAIT_INFINITE);
+    kafkatools_producer_destroy(state->producer, wait_ms);
 }
 
 
@@ -496,29 +507,33 @@ on_error_result:
 void kafkatools_producer_destroy (kt_producer producer, int flush_wait_ms)
 {
     if (producer) {
-        if (producer->rkProducer) {
-            rd_kafka_t *rkProducer = producer->rkProducer;
+        rd_kafka_t *rkProducer = NULL;
 
-            producer->rkProducer = 0;
+        pthread_mutex_lock(&producer->lock);
+
+        if (producer->rkProducer) {
+            rkProducer = producer->rkProducer;
+            producer->rkProducer = NULL;
 
             /*  Wait until all outstanding produce requests, et.al, are completed. */
             while (flush_wait_ms-- != 0) {
                 if (rd_kafka_flush(rkProducer, 1) == RD_KAFKA_RESP_ERR__TIMED_OUT) {
                     continue;
                 }
-
                 break;
             }
+        }
 
+        /* Must clean topic tree before destroy rkProducer */
+        rbtree_traverse(&producer->rktopic_tree, rktopic_object_release, 0);
+        rbtree_clean(&producer->rktopic_tree);
+
+        if (rkProducer) {
             /* Destroy the producer instance */
             rd_kafka_destroy(rkProducer);
         }
 
-        rbtree_traverse(&producer->rktopic_tree, rktopic_object_release, 0);
-        rbtree_clean(&producer->rktopic_tree);
-
         pthread_mutex_destroy(&producer->lock);
-
         mem_free(producer);
     }
 }

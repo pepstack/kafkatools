@@ -88,8 +88,11 @@ extern "C" {
 #define KAFKATOOLS_ERRSTR_SIZE         256
 #define KAFKATOOLS_PROPSFILE_LEN_MAX   255
 
-
 #define KAFKATOOLS_MSG_CB_DEFAULT  ((kafkatools_msg_cb)((void*) (uintptr_t) (int) (-1)))
+
+#define KAFKA_PRODUCER_PROPERTIES_FILE    "kafka-producer.properties"
+#define KAFKA_CONSUMER_PROPERTIES_FILE    "kafka-consumer.properties"
+
 
 typedef void (*kafkatools_msg_cb) (rd_kafka_t *rk,  const rd_kafka_message_t *rkmessage, void *opaque);
 
@@ -165,7 +168,7 @@ typedef struct
  */
 extern int kafkatools_producer_state_init (const char *propertiesfile, const char *topicpartitions, kafkatools_msg_cb statecb, void *argp, ktproducer_state_t *state);
 
-extern void kafkatools_producer_state_uninit (ktproducer_state_t *state);
+extern void kafkatools_producer_state_uninit (ktproducer_state_t *state, int wait_ms);
 
 
 /**

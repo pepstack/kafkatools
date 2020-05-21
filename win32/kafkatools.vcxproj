@@ -73,23 +73,23 @@
     <IncludePath>$(ProjectDir)..\librdkafka-1.4.2\src;$(ProjectDir)..\pthreads-w32\include;$(ProjectDir)..\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\librdkafka-1.4.2\win32\outdir\v140\x64\Debug;$(ProjectDir)..\pthreads-w32\lib\x64;$(LibraryPath)</LibraryPath>
     <OutDir>$(ProjectDir)target\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)build\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)build\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(ProjectDir)..\librdkafka-1.4.2\src;$(ProjectDir)..\pthreads-w32\include;$(ProjectDir)..\src;$(IncludePath)</IncludePath>
     <OutDir>$(ProjectDir)target\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)build\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)build\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <LibraryPath>$(ProjectDir)..\librdkafka-1.4.2\win32\outdir\v140\x64\Release;$(ProjectDir)..\pthreads-w32\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(ProjectDir)target\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)build\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)build\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <IncludePath>$(ProjectDir)..\librdkafka-1.4.2\src;$(ProjectDir)..\pthreads-w32\include;$(ProjectDir)..\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\librdkafka-1.4.2\win32\outdir\v140\Win32\Debug;$(ProjectDir)..\pthreads-w32\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(ProjectDir)target\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)build\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(ProjectDir)build\$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
     <IncludePath>$(ProjectDir)..\librdkafka-1.4.2\src;$(ProjectDir)..\pthreads-w32\include;$(ProjectDir)..\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\librdkafka-1.4.2\win32\outdir\v140\Win32\Release;$(ProjectDir)..\pthreads-w32\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
