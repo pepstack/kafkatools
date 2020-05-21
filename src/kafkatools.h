@@ -188,7 +188,7 @@ extern void kafkatools_mutex_unlock (pthread_mutex_t * mutex);
 /**
  * kafka producer api
  */
-extern int kafkatools_producer_create (const char **prop_names, const char **prop_values, kafkatools_msg_cb msg_cb, void *msg_opaque, kt_producer *producer);
+extern int kafkatools_producer_create (char **prop_names, char **prop_values, kafkatools_msg_cb msg_cb, void *msg_opaque, kt_producer *producer);
 
 extern void kafkatools_producer_destroy (kt_producer producer, int flush_wait_ms);
 

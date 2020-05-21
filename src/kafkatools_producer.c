@@ -383,7 +383,7 @@ void kafkatools_propsbuf_free (char *propsbuf)
 }
 
 
-int kafkatools_producer_create (const char **propnames, const char **propvalues, kafkatools_msg_cb msg_cb, void *msg_opaque, kt_producer *outproducer)
+int kafkatools_producer_create (char **propnames, char **propvalues, kafkatools_msg_cb msg_cb, void *msg_opaque, kt_producer *outproducer)
 {
     int i;
 
