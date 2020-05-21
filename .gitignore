@@ -76,7 +76,6 @@ stamp-h1
 *.scan
 *.m4
 m4/
-libs/
 local-pkgs/
 .deps/
 .libs/
