@@ -152,7 +152,6 @@ typedef struct
 {
     kt_producer producer;
     kafkatools_msg_site_t site;
-
     void *statearg;
 } ktproducer_state_t;
 

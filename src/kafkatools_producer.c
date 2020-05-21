@@ -152,11 +152,24 @@ int kafkatools_producer_state_init (const char *propertiesfile, const char *topi
 
     char *propnames[KAFKATOOLS_CONF_PROPS_MAX] = {0};
     char *propvalues[KAFKATOOLS_CONF_PROPS_MAX] = {0};
+    char *topicptsplit[2] = {0};
 
     cstrbuf propsfile = kt_get_producer_properties_pathfile(propertiesfile);
     cstrbuf topicpt = cstrbufNew(0, topicpartitions, -1);
 
-    char *topicptsplit[2] = {0};
+    if (!topicpt) {
+        printf("(%s:%d) ERROR -  invalid topic partitions: '%s'\n",  THIS_FILE, __LINE__, topicpartitions);
+        cstrbufFree(&propsfile);
+        return KAFKATOOLS_EARG;
+    }
+
+    cstr_split_substr(topicpt->str, ":", 1, topicptsplit, 2);
+    if (! topicptsplit[0]) {
+        printf("(%s:%d) ERROR - bad topic partitions: '%s'\n", THIS_FILE, __LINE__, topicpartitions);
+        cstrbufFree(&propsfile);
+        cstrbufFree(&topicpt);
+        return KAFKATOOLS_EFATAL;
+    }
 
     if (! pathfile_exists(cstrbufGetStr(propsfile))) {
         printf("(%s:%d) ERROR -  properties file not found: '%.*s'\n",  THIS_FILE, __LINE__,
@@ -167,7 +180,7 @@ int kafkatools_producer_state_init (const char *propertiesfile, const char *topi
         return KAFKATOOLS_EFILE;
     }
 
-    ret = kafkatools_props_readconf(cstrbufGetStr(propsfile), cstrbufGetStr(topicpt), &propsbuf, &bufsize);
+    ret = kafkatools_props_readconf(cstrbufGetStr(propsfile), topicptsplit[0], &propsbuf, &bufsize);
     cstrbufFree(&propsfile);
 
     if (kafkatools_props_retrieve(propsbuf, bufsize, propnames, propvalues, ret) != KAFKATOOLS_SUCCESS) {
@@ -188,14 +201,8 @@ int kafkatools_producer_state_init (const char *propertiesfile, const char *topi
     }
     kafkatools_propsbuf_free(propsbuf);
 
-    // parse topic and partitions
-    ret = cstr_split_substr(topicpt->str, ":", 1, topicptsplit, 2);
-    if (ret == 1) {
-        // only topic without partition
-        state->site.topic = kafkatools_producer_get_topic(state->producer, topicpt->str);
-
-        state->site.partition = state->site.partitionid_min = state->site.partitionid_max = 0;
-    } else if (ret == 2) {
+    // set topic and partitions scope
+    if (topicptsplit[1]) {
         state->site.topic = kafkatools_producer_get_topic(state->producer, topicptsplit[0]);
 
         if (strchr(topicptsplit[1], '-')) {
@@ -208,11 +215,10 @@ int kafkatools_producer_state_init (const char *propertiesfile, const char *topi
             state->site.partition = state->site.partitionid_min = state->site.partitionid_max = atoi(topicptsplit[1]);
         }
     } else {
-        printf("(%s:%d) ERROR - invalid topic partitions: '%.*s'\n", THIS_FILE, __LINE__,
-            cstrbufGetLen(topicpt), cstrbufGetStr(topicpt));
+        // only topic without partition
+        state->site.topic = kafkatools_producer_get_topic(state->producer, topicpt->str);
 
-        cstrbufFree(&topicpt);
-        return KAFKATOOLS_EFATAL;
+        state->site.partition = state->site.partitionid_min = state->site.partitionid_max = 0;
     }
 
     // validate state topic partitions

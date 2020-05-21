@@ -185,7 +185,9 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\common\cstrbuf.h" />
     <ClInclude Include="..\src\common\memapi.h" />
+    <ClInclude Include="..\src\common\misc.h" />
     <ClInclude Include="..\src\common\readconf.h" />
     <ClInclude Include="..\src\common\red_black_tree.h" />
     <ClInclude Include="..\src\common\thread_rwlock.h" />
@@ -193,6 +195,7 @@
     <ClInclude Include="..\src\kafkatools.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\common\misc.c" />
     <ClCompile Include="..\src\common\readconf.c" />
     <ClCompile Include="..\src\common\red_black_tree.c" />
     <ClCompile Include="..\src\kafkatools_consumer.c" />
