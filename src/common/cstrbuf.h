@@ -30,7 +30,7 @@
  * @author     Liang Zhang <350137278@qq.com>
  * @version    0.0.10
  * @create     2017-08-28 11:12:10
- * @update     2020-05-21 15:20:46
+ * @update     2020-05-27 21:20:46
  */
 #ifndef _CSTRBUF_H_
 #define _CSTRBUF_H_
@@ -45,6 +45,10 @@ extern "C"
 
 #ifndef cstr_allocate_blocksize
 # define cstr_allocate_blocksize    16
+#endif
+
+#ifndef cstr_length_maximum
+# define cstr_length_maximum        536870911
 #endif
 
 #define cstr_bool_true   1
@@ -423,6 +427,53 @@ int cstr_replace_new (const char *original, const char *pattern, const char *rep
     }
 
     return 0;
+}
+
+
+/**
+ * true:
+ *    "8897391"
+ *    "   123.456"
+ *    "+123456.123"
+ *    "-100  "
+ * false:
+ *    ""
+ *    "   "
+ *    "189 0931"
+ *    "12.56.89"
+ *    "+ 1234.556"
+ */
+NOWARNING_UNUSED(static)
+int cstr_isnumeric (char *numeric, int len)
+{
+    int i = 0;
+    int dots = 0;
+
+    char *str = cstr_LRtrim_whitespace(numeric);
+    len = cstr_length(str, len);
+
+    if (len < 1 || len > 40) {
+        return cstr_bool_false;
+    }
+
+    if (str[0] == '+' || str[0] == '-') {
+        i = 1;
+    }
+
+    for (; i < len; i++) {
+        if (! isdigit(str[i])) {
+            if (str[i] == '.') {
+                dots++;
+                if (dots > 1) {
+                    return cstr_bool_false;
+                }
+            } else {
+                return cstr_bool_false;
+            }
+        }
+    }
+
+    return cstr_bool_true;
 }
 
 
@@ -831,14 +882,18 @@ NOWARNING_UNUSED(static)
 int cstr_containwith (const char *str, int count, const char *sub, int sublen)
 {
     if (str == sub) {
-        return cstr_bool_true;
+        return 0;
     }
 
     if (str && sub && sublen <= count) {
-        return strstr((char *)str, sub)? cstr_bool_true : cstr_bool_false;
+        char *at = strstr((char *)str, sub);
+        if (! at) {
+            return -1;
+        }
+        return (int)(at - str);
     }
 
-    return cstr_bool_false;
+    return -1;
 }
 
 
@@ -1006,6 +1061,70 @@ int cstr_readline (FILE *fp, char line[], size_t maxlen, int ignore_whitespace)
 
 #define TM_YEAR_IS_LEAP(year)   ((year) % 4? 0 : ((year) % 100? 1 : ((year) % 400? 0 : 1)))
 
+#define CSTR_DATETIME_SIZE_MAX  30
+
+
+typedef struct {
+    /* date fields: if year = -1, date is invalid */
+    int year;
+    int month;
+    int day;
+
+    /* time fields: if hour = -1, time is invalid */
+    int hour;
+    int minute;
+    int second;
+
+    /* millisecond: if millisecond = -1, millisecond is invalid */
+    int millisecond;
+
+    /**
+     * -1 : timezone is invalid
+     *
+     * 800 = +08:00, -800 = W08:00
+     */
+    int timezone;
+} cstr_datetime_t;
+
+
+NOWARNING_UNUSED(static)
+const char * cstr_datetime_print (const cstr_datetime_t *dt, char outfmt[CSTR_DATETIME_SIZE_MAX])
+{
+    int dlen = 0,
+        tlen = 0,
+        mlen = 0;
+
+    *outfmt = 0;
+
+    if (dt->year != -1) {
+        dlen = snprintf_chkd_V1(outfmt, CSTR_DATETIME_SIZE_MAX, "%04d-%02d-%02d", dt->year, dt->month, dt->day);
+    }
+
+    if (dt->hour != -1) {
+        if (dlen) {
+            outfmt[dlen++] = 32;
+        }
+
+        tlen = snprintf_chkd_V1(outfmt + dlen, CSTR_DATETIME_SIZE_MAX - dlen, "%02d:%02d:%02d", dt->hour, dt->minute, dt->second);
+    }
+
+    if (dt->millisecond != -1) {
+        mlen = snprintf_chkd_V1(outfmt + dlen + tlen, CSTR_DATETIME_SIZE_MAX - dlen - tlen, ".%03d", dt->millisecond);
+    }
+
+    if (dt->timezone != -1) {
+        if (dt->timezone < 0) {
+            snprintf_chkd_V1(outfmt + dlen + tlen + mlen, CSTR_DATETIME_SIZE_MAX - dlen - tlen - mlen, "W%02d:%02d",
+                -dt->timezone / 100, -dt->timezone % 100);
+        } else {
+            snprintf_chkd_V1(outfmt + dlen + tlen + mlen, CSTR_DATETIME_SIZE_MAX - dlen - tlen - mlen, "+%02d:%02d",
+                dt->timezone / 100, dt->timezone % 100);
+        }
+    }
+
+    return outfmt;
+}
+
 
 /**
  * time_is_valid()
@@ -1046,11 +1165,57 @@ int time_is_valid (int year, int mon, int day, int hour, int min, int sec)
 
 
 NOWARNING_UNUSED(static)
-ub8 cstr_parse_timestamp (char *timestr)
+int cstr_parse_timezone (char *tz)
 {
+    int sign = 0;
+
+    /* +08:00/E0800; W08:00 */
+    if (*tz == '+' || *tz == 'E') {
+        sign = 1;
+    } else if (*tz == '-' || *tz == 'W') {
+        sign = -1;
+    }
+
+    if (!sign) {
+        return -1;
+    }
+
+    if (isdigit(tz[1]) && isdigit(tz[2]) && (tz[3]==':' || tz[3]=='.') &&
+        isdigit(tz[4]) && isdigit(tz[5]) && tz[6]=='\0') {
+        char szhour[3] = {tz[1], tz[2], '\0'};
+        char szmin[3] = {tz[4], tz[5], '\0'};
+
+        int h = atoi(szhour);
+        int m = atoi(szmin);
+
+        if (h > 23) {
+            return -1;
+        }
+        if (m > 59) {
+            return -1;
+        }
+        return (h * 100 + m) * sign;
+    }
+
+    return -1;
+}
+
+
+NOWARNING_UNUSED(static)
+ub8 cstr_parse_timestamp (char *timestr, cstr_datetime_t *outdt)
+{
+    int len = 0;
+    int YMD = 0, HMS = 0, MMM = 0;
+
     /**
+     * UTC+08:00 = +0800 or E0800
+     * UTC-11:00 =        W0800
+     *
+     * '2019-12-22 12:36:59.065+08:00' or '2019-12-22 12:36:59.065E08:00'
      * '2019-12-22 12:36:59.065'
+     * '2019-12-22 12:36:59W08:00' or '2019-12-22 12:36:59-08:00'
      * '2019-12-22 12:36:59'
+     * '2019-12-22E08:00' or '2019-12-22+08:00'
      * '2019-12-22'
      */
     char Year[5] = {'0', '0', '0', '0', '\0'};
@@ -1063,14 +1228,43 @@ ub8 cstr_parse_timestamp (char *timestr)
 
     char msec[4] = {'0', '0', '0', '\0'};
 
-    char *str = cstr_LRtrim_whitespace(timestr);
+    int timezone = -1;
 
-    char *a = strchr(str, 39);
-    char *b = strrchr(str, 39);
+    char *str, *a, *b, *hms, *tz;
 
-    char *hms;
+    tz = strchr(timestr, '+');
+    if (!tz) {
+        tz = strchr(timestr, 'E');
+        if (!tz) {
+            tz = strchr(timestr, 'W');
+            if (!tz) {
+                // -08:00 or -08.00
+                tz = strrchr(timestr, '-');
+                if (tz) {
+                    if (tz[1] && tz[2] && (tz[3] == ':' || tz[3] == '.')) {
+                        // has timezone
+                        tz;
+                    } else {
+                        // no timezone
+                        tz = 0;
+                    }
+                }
+            }
+        }
+    }
 
-    int len = 0;
+    if (tz) {
+        timezone = cstr_parse_timezone(tz);
+        if (timezone == -1) {
+            // error timezone
+            return (-1);
+        }
+        *tz = 0;
+    }
+
+    str = cstr_LRtrim_whitespace(timestr);
+    a = strchr(str, 39);
+    b = strrchr(str, 39);
 
     if (a && b) {
         *a++ = 0;
@@ -1086,6 +1280,8 @@ ub8 cstr_parse_timestamp (char *timestr)
 
     if (len == 10) {
         /* 2019-12-22 */
+        YMD = 1;
+
         a = strchr(str, '-');
         b = strrchr(str, '-');
 
@@ -1102,6 +1298,9 @@ ub8 cstr_parse_timestamp (char *timestr)
         }
     } else if (len == 19) {
         /* 2019-12-22 12:36:59 */
+        YMD = 1;
+        HMS = 1;
+
         a = strchr(str, 32);
         if (a && a - str == 10) {
             *a++ = 0;
@@ -1143,6 +1342,10 @@ ub8 cstr_parse_timestamp (char *timestr)
         }
     } else if (len == 23) {
         /* 2019-12-22 12:36:59.065 */
+        YMD = 1;
+        HMS = 1;
+        MMM = 1;
+
         a = strchr(str, 32);
         if (a && a - str == 10) {
             *a++ = 0;
@@ -1206,6 +1409,11 @@ ub8 cstr_parse_timestamp (char *timestr)
         return (-1);
     }
 
+    if (! YMD) {
+        // no year
+        return (-1);
+    }
+
     if (cstr_isdigit(Year, 4) &&
         cstr_isdigit(Mon, 2) &&
         cstr_isdigit(Day, 2) &&
@@ -1213,7 +1421,7 @@ ub8 cstr_parse_timestamp (char *timestr)
         cstr_isdigit(min, 2) &&
         cstr_isdigit(sec, 2) &&
         cstr_isdigit(msec, 3)) {
-        time_t tsec;
+        ub8 tsec;
         struct tm t = {0};
 
         t.tm_year = atoi(Year);
@@ -1233,14 +1441,35 @@ ub8 cstr_parse_timestamp (char *timestr)
         t.tm_mon  -= 1;
 
         // since 1970-01-01 UTChh:00:00 (china: hh=8)
-        tsec = mktime(&t);
-
-        if (tsec == (time_t)(-1)) {
-            fprintf(stderr, "%s\n", strerror(errno));
+        tsec = (ub8) mktime(&t);
+        if (tsec == (ub8)(-1)) {
             return (-1);
         }
 
-        return (ub8)(tsec * 1000 + atoi(msec));
+        if (outdt) {
+            outdt->year = atoi(Year);
+            outdt->month = atoi(Mon);
+            outdt->day = atoi(Day);
+
+            outdt->hour = atoi(hour);
+            outdt->minute = atoi(min);
+            outdt->second = atoi(sec);
+            outdt->millisecond = atoi(msec);
+
+            outdt->timezone = timezone;
+        }
+
+        if (! HMS) {
+            outdt->hour = -1;
+            outdt->minute = 0;
+            outdt->second = 0;
+        }
+        if (! MMM) {
+            outdt->millisecond = -1;
+        }
+
+        tsec *= 1000;
+        return (ub8)(tsec + atoi(msec));
     }
 
     // error no digit
@@ -1352,12 +1581,15 @@ cstrbuf cstrbufNew (ub4 maxsz, const char *str, ub4 len)
     cstrbuf_t *csb;
 
     if (len == cstrbuf_error_size_len) {
-        len = (ub4) cstr_length(str, -1);
+        len = (ub4) cstr_length(str, cstr_length_maximum);
     }
 
-    if (maxsz == cstrbuf_error_size_len || maxsz <= len) {
+    if (! maxsz) {
+        maxsz = len + 1;
+    } else if (maxsz == cstrbuf_error_size_len || maxsz <= len) {
         maxsz = cstrbuf_alignsize(len + 1);
     } else {
+        /* maxsz > len */
         maxsz = cstrbuf_alignsize(maxsz);
     }
 
