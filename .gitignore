@@ -5,7 +5,7 @@
 
 .git/
 
-./libs/
+libs/
 
 # Object files
 *.o
