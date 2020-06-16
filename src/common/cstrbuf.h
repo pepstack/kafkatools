@@ -30,7 +30,7 @@
  * @author     Liang Zhang <350137278@qq.com>
  * @version    0.0.10
  * @create     2017-08-28 11:12:10
- * @update     2020-05-27 21:20:46
+ * @update     2020-06-12 17:20:46
  */
 #ifndef _CSTRBUF_H_
 #define _CSTRBUF_H_
@@ -54,7 +54,8 @@ extern "C"
 #define cstr_bool_true   1
 #define cstr_bool_false  0
 
-#define cstr_length(str, maxlen)    (str? ((maxlen)==-1? (int)strlen(str) : (int)strnlen(str, maxlen)) : 0)
+#define cstr_length(str, maxlen)    ((int)((str)==NULL? 0: ((maxlen)==-1? strlen(str) : strnlen(str, maxlen))))
+
 
 NOWARNING_UNUSED(static)
 void cstr_varray_free (char ** varr, int maxnum)
@@ -237,7 +238,7 @@ NOWARNING_UNUSED(static)
 char * cstr_Ltrim_whitespace (char *str)
 {
     char *p = str;
-    while (p && isspace(*p)) {
+    while (p && isspace((int)*p)) {
         p++;
     }
     return p;
@@ -248,7 +249,7 @@ NOWARNING_UNUSED(static)
 int cstr_Rtrim_whitespace (char *str, int len)
 {
     while (len-- > 0) {
-        if (isspace(str[len])) {
+        if (isspace((int)str[len])) {
             str[len] = 0;
         } else {
             break;
@@ -274,14 +275,14 @@ int cstr_shrink_whitespace (const char *str, int *start, int *end)
     int e = *end;
 
     for (; s < *end; s++) {
-        if (! isspace(str[s])) {
+        if (! isspace((int)str[s])) {
             break;
         }
     }
     *start = s;
 
     for (; e >= *start; e--) {
-        if (! isspace(str[e])) {
+        if (! isspace((int)str[e])) {
             break;
         }
     }
@@ -294,7 +295,7 @@ int cstr_shrink_whitespace (const char *str, int *start, int *end)
 NOWARNING_UNUSED(static)
 char * cstr_trim_whitespace (char * s)
 {
-    return (*s==0)?s:((( ! isspace(*s) )?(((cstr_trim_whitespace(s+1)-1)==s)? s : (*(cstr_trim_whitespace(s+1)-1)=*s, *s=32 ,cstr_trim_whitespace(s+1))):cstr_trim_whitespace(s+1)));
+    return (*s==0)?s:((( ! isspace((int)*s) )?(((cstr_trim_whitespace(s+1)-1)==s)? s : (*(cstr_trim_whitespace(s+1)-1)=*s, *s=32 ,cstr_trim_whitespace(s+1))):cstr_trim_whitespace(s+1)));
 }
 
 
@@ -461,7 +462,7 @@ int cstr_isnumeric (char *numeric, int len)
     }
 
     for (; i < len; i++) {
-        if (! isdigit(str[i])) {
+        if (! isdigit((int)str[i])) {
             if (str[i] == '.') {
                 dots++;
                 if (dots > 1) {
@@ -983,7 +984,7 @@ NOWARNING_UNUSED(static)
 int cstr_isdigit (const char *str, int len)
 {
     while(len-- > 0) {
-        if (! isdigit(str[len])) {
+        if (! isdigit((int)str[len])) {
             return cstr_bool_false;
         }
     }
@@ -1038,7 +1039,7 @@ int cstr_readline (FILE *fp, char line[], size_t maxlen, int ignore_whitespace)
     while ((ch = fgetc(fp)) != EOF) {
         if ((size_t) len < maxlen) {
             if (ch != '\r' && ch != '\n' && ch != '\\') {
-                if (! ignore_whitespace || ! isspace(ch)) {
+                if (! ignore_whitespace || ! isspace((int)ch)) {
                     line[len++] = ch;
                 }
             }
@@ -1180,8 +1181,8 @@ int cstr_parse_timezone (char *tz)
         return -1;
     }
 
-    if (isdigit(tz[1]) && isdigit(tz[2]) && (tz[3]==':' || tz[3]=='.') &&
-        isdigit(tz[4]) && isdigit(tz[5]) && tz[6]=='\0') {
+    if (isdigit((int)tz[1]) && isdigit((int)tz[2]) && (tz[3]==':' || tz[3]=='.') &&
+        isdigit((int)tz[4]) && isdigit((int)tz[5]) && tz[6]=='\0') {
         char szhour[3] = {tz[1], tz[2], '\0'};
         char szmin[3] = {tz[4], tz[5], '\0'};
 
@@ -1243,7 +1244,7 @@ ub8 cstr_parse_timestamp (char *timestr, cstr_datetime_t *outdt)
                 if (tz) {
                     if (tz[1] && tz[2] && (tz[3] == ':' || tz[3] == '.')) {
                         // has timezone
-                        tz;
+                        // tz;
                     } else {
                         // no timezone
                         tz = 0;

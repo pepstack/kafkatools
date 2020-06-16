@@ -48,9 +48,18 @@ A C wrapper for librdkafka.
 - Build all projects
 
 	librdkafka     - dll
+    
 	kafkatools     - static lib
-	consume        - console exe
-	produce        - console exe
+	
+    consume        - console exe
+	
+    produce        - console exe
+
+- See dependencies for produce
+
+    $ ldd produce
+
+    You might copy all libkafkatools.so.* into the path which produce depends on.
 
 ## Build librdkafka for Linux Server
 

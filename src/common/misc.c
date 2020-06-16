@@ -34,13 +34,12 @@
  */
 #include "misc.h"
 
-
-const char * timezone_format (long tz, char *tzfmt)
+const char *timezone_format(long tz, char *tzfmt)
 {
     if (tz < 0) {
-        snprintf(tzfmt, 5 + 1, "+%02d%02d", -(int)(tz/3600), -(int)((tz % 3600) / 60));
+        snprintf_chkd_V1(tzfmt, 5 + 1, "+%02d%02d", -(int)(tz / 3600), -(int)((tz % 3600) / 60));
     } else if (tz > 0) {
-        snprintf(tzfmt, 5 + 1, "-%02d%02d", (int)(tz/3600), (int)((tz % 3600) / 60));
+        snprintf_chkd_V1(tzfmt, 5 + 1, "-%02d%02d", (int)(tz / 3600), (int)((tz % 3600) / 60));
     } else {
         /* UTC */
         memcpy(tzfmt, "+0000", 5);
@@ -49,15 +48,14 @@ const char * timezone_format (long tz, char *tzfmt)
     return tzfmt;
 }
 
-
-long timezone_compute (time_t ts, char *tzfmt)
+long timezone_compute(time_t ts, char *tzfmt)
 {
     long tz;
     time_t ut;
     struct tm t;
 
 #if defined(__WINDOWS__)
-    if (gmtime_s(&t, &ts) != (errno_t) 0) {
+    if (gmtime_s(&t, &ts) != (errno_t)0) {
         /* error */
         perror("gmtime_s\n");
         return (-1);
@@ -72,7 +70,7 @@ long timezone_compute (time_t ts, char *tzfmt)
     ut = mktime(&t);
 #endif
 
-    tz = (long) difftime(ut, ts);
+    tz = (long)difftime(ut, ts);
     if (tzfmt) {
         timezone_format(tz, tzfmt);
     }
@@ -80,8 +78,7 @@ long timezone_compute (time_t ts, char *tzfmt)
     return tz;
 }
 
-
-int daylight_compute (time_t ts)
+int daylight_compute(time_t ts)
 {
     struct tm tm;
     tm.tm_isdst = 0;
@@ -95,8 +92,7 @@ int daylight_compute (time_t ts)
     return tm.tm_isdst;
 }
 
-
-void getnowtimeofday (struct timespec *now)
+void getnowtimeofday(struct timespec *now)
 {
 #if defined(__WINDOWS__)
     FILETIME tmfile;
@@ -104,27 +100,26 @@ void getnowtimeofday (struct timespec *now)
 
     GetSystemTimeAsFileTime(&tmfile);
 
-    _100nanos.LowPart   = tmfile.dwLowDateTime;
-    _100nanos.HighPart  = tmfile.dwHighDateTime; 
+    _100nanos.LowPart = tmfile.dwLowDateTime;
+    _100nanos.HighPart = tmfile.dwHighDateTime;
     _100nanos.QuadPart -= 0x19DB1DED53E8000;
 
     /* Convert 100ns units to seconds */
     now->tv_sec = (time_t)(_100nanos.QuadPart / (10000 * 1000));
 
     /* Convert remainder to nanoseconds */
-    now->tv_nsec = (long) ((_100nanos.QuadPart % (10000 * 1000)) * 100);
+    now->tv_nsec = (long)((_100nanos.QuadPart % (10000 * 1000)) * 100);
 #else
     clock_gettime(CLOCK_REALTIME, now);
 #endif
 }
-
 
 /**
  * taken from: redis/src/localtime.c
  *   although localtime_s on windows is a bit faster than getlocaltime_safe,
  *   here we use getlocaltime_safe due to it cross-platforms.
  */
-void getlocaltime_safe (struct tm *loc, int64_t t, int tz, int dst)
+void getlocaltime_safe(struct tm *loc, int64_t t, int tz, int dst)
 {
 /**
  * A year not divisible by 4 is not leap.
@@ -132,10 +127,10 @@ void getlocaltime_safe (struct tm *loc, int64_t t, int tz, int dst)
  * If div by 100 *and* 400 is not leap.
  * If div by 100 and not by 400 is leap.
  */
-# define YEAR_IS_LEAPYEAR(year)   ((year) % 4? 0 : ((year) % 100? 1 : ((year) % 400? 0 : 1)))
-# define SECONDS_PER_MINUTE       ((time_t)60)
-# define SECONDS_PER_HOUR         ((time_t)3600)
-# define SECONDS_PER_DAY          ((time_t)86400)
+#define YEAR_IS_LEAPYEAR(year) ((year) % 4 ? 0 : ((year) % 100 ? 1 : ((year) % 400 ? 0 : 1)))
+#define SECONDS_PER_MINUTE ((time_t)60)
+#define SECONDS_PER_HOUR ((time_t)3600)
+#define SECONDS_PER_DAY ((time_t)86400)
 
     /* We need to calculate in which month and day of the month we are. To do
      * so we need to skip days according to how many days there are in each
@@ -148,7 +143,7 @@ void getlocaltime_safe (struct tm *loc, int64_t t, int tz, int dst)
     t -= tz;
 
     /* Adjust for daylight time. 0 default */
-    t += 3600*dst;
+    t += 3600 * dst;
 
     /* Days passed since epoch. */
     int64_t days = t / SECONDS_PER_DAY;
@@ -169,25 +164,26 @@ void getlocaltime_safe (struct tm *loc, int64_t t, int tz, int dst)
     /* Calculate the current year. */
     loc->tm_year = 1970;
 
-    while(1) {
+    while (1) {
         /* Leap years have one day more. */
         int64_t days_this_year = 365 + YEAR_IS_LEAPYEAR(loc->tm_year);
-        if (days_this_year > days) break;
+        if (days_this_year > days)
+            break;
         days -= days_this_year;
         loc->tm_year++;
     }
 
     /* Number of day of the current year. */
-    loc->tm_yday = (int) days;
+    loc->tm_yday = (int)days;
     loc->tm_mon = 0;
 
     if (YEAR_IS_LEAPYEAR(loc->tm_year)) {
-        while(days >= leap_mdays[loc->tm_mon]) {
+        while (days >= leap_mdays[loc->tm_mon]) {
             days -= leap_mdays[loc->tm_mon];
             loc->tm_mon++;
         }
     } else {
-        while(days >= mean_mdays[loc->tm_mon]) {
+        while (days >= mean_mdays[loc->tm_mon]) {
             days -= mean_mdays[loc->tm_mon];
             loc->tm_mon++;
         }
@@ -205,32 +201,70 @@ void getlocaltime_safe (struct tm *loc, int64_t t, int tz, int dst)
 #undef YEAR_IS_LEAPYEAR
 }
 
+sb8 difftime_msec(const struct timespec *oldtms, const struct timespec *newtms)
+{
+    sb8 sec = 0;
+    sb8 nsec = 0;
+
+    if (!oldtms && !newtms) {
+        /* get current timestamp in ms */
+        struct timespec now;
+        getnowtimeofday(&now);
+        sec = now.tv_sec;
+        nsec = now.tv_nsec;
+    } else if (oldtms && newtms) {
+        sec = (sb8)(newtms->tv_sec - oldtms->tv_sec);
+        nsec = (sb8)(newtms->tv_nsec - oldtms->tv_nsec);
+    } else if (newtms) {
+        sec = (sb8)(newtms->tv_sec);
+        nsec = (sb8)(newtms->tv_nsec);
+    } else if (oldtms) {
+        sec = (sb8)(oldtms->tv_sec);
+        nsec = (sb8)(oldtms->tv_nsec);
+    }
+
+    if (sec > 0) {
+        if (nsec >= 0) {
+            return ((sec * 1000UL) + nsec / 1000000UL);
+        } else { /* nsec < 0 */
+            return (sec - 1) * 1000UL + (nsec + 1000000000UL) / 1000000UL;
+        }
+    } else if (sec < 0) {
+        if (nsec <= 0) {
+            return ((sec * 1000UL) + nsec / 1000000UL);
+        } else{ /* nsec > 0 */
+            return (sec + 1) * 1000UL + (nsec - 1000000000UL) / 1000000UL;
+        }
+    } else { /* sec = 0 */
+        return nsec / 1000000UL;
+    }
+}
 
 #if defined(__WINDOWS__)
 
-filehandle_t file_create (const char *pathname, int flags, mode_t mode)
+filehandle_t file_create(const char *pathname, int flags, int mode)
 {
-    filehandle_t hf = CreateFileA(pathname, (DWORD)(flags), FILE_SHARE_READ, 
-        NULL,
-        CREATE_NEW,
-        (DWORD)(mode),
-        NULL);
+    filehandle_t hf = CreateFileA(pathname, (DWORD)(flags), FILE_SHARE_READ,
+                                  NULL,
+                                  CREATE_NEW,
+                                  (DWORD)(mode),
+                                  NULL);
     return hf;
 }
 
-filehandle_t file_open_read (const char *pathname)
+filehandle_t file_open_read(const char *pathname)
 {
     filehandle_t hf = CreateFileA(pathname,
-        GENERIC_READ,
-        FILE_SHARE_READ, 
-        NULL,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        NULL);
+                                  GENERIC_READ,
+                                  FILE_SHARE_READ,
+                                  NULL,
+                                  OPEN_EXISTING,
+                                  FILE_ATTRIBUTE_NORMAL,
+                                  NULL);
     return hf;
 }
 
-int file_close (filehandle_t *phf)
+int file_close(filehandle_t *phf)
 {
     if (phf) {
         filehandle_t hf = *phf;
@@ -246,15 +280,15 @@ int file_close (filehandle_t *phf)
     return (-1);
 }
 
-int file_readbytes (filehandle_t hf, char *bytesbuf, ub4 sizebuf)
+int file_readbytes(filehandle_t hf, char *bytesbuf, ub4 sizebuf)
 {
     BOOL ret;
     DWORD cbread, cboffset = 0;
 
     while (cboffset != (DWORD)sizebuf) {
-        ret = ReadFile(hf, (void*)(bytesbuf + cboffset), (DWORD)(sizebuf - cboffset), &cbread, NULL);
+        ret = ReadFile(hf, (void *)(bytesbuf + cboffset), (DWORD)(sizebuf - cboffset), &cbread, NULL);
 
-        if (! ret) {
+        if (!ret) {
             /* read on error: uses GetLastError() for more */
             return (-1);
         }
@@ -268,18 +302,18 @@ int file_readbytes (filehandle_t hf, char *bytesbuf, ub4 sizebuf)
     }
 
     /* success: actual read bytes */
-    return (int) cboffset;
+    return (int)cboffset;
 }
 
-int file_writebytes (filehandle_t hf, const char *bytesbuf, ub4 bytestowrite)
+int file_writebytes(filehandle_t hf, const char *bytesbuf, ub4 bytestowrite)
 {
     BOOL ret;
     DWORD cbwritten, cboffset = 0;
 
     while (cboffset != (DWORD)bytestowrite) {
-        ret = WriteFile(hf, (const void*)(bytesbuf + cboffset), (DWORD)(bytestowrite - cboffset), &cbwritten, NULL);
+        ret = WriteFile(hf, (const void *)(bytesbuf + cboffset), (DWORD)(bytestowrite - cboffset), &cbwritten, NULL);
 
-        if (! ret) {
+        if (!ret) {
             /* write on error */
             return (-1);
         }
@@ -291,11 +325,11 @@ int file_writebytes (filehandle_t hf, const char *bytesbuf, ub4 bytestowrite)
     return 0;
 }
 
-int pathfile_exists (const char *pathname)
+int pathfile_exists(const char *pathname)
 {
     if (pathname) {
         WIN32_FIND_DATAA FindFileData;
-        HANDLE handle = FindFirstFileA(pathname, &FindFileData) ;
+        HANDLE handle = FindFirstFileA(pathname, &FindFileData);
 
         if (handle != INVALID_HANDLE_VALUE) {
             FindClose(handle);
@@ -309,7 +343,7 @@ int pathfile_exists (const char *pathname)
     return 0;
 }
 
-int pathfile_remove (const char *pathname)
+int pathfile_remove(const char *pathname)
 {
     if (DeleteFileA(pathname)) {
         return 0;
@@ -318,28 +352,27 @@ int pathfile_remove (const char *pathname)
     return (-1);
 }
 
-int pathfile_move (const char *pathnameOld, const char *pathnameNew)
+int pathfile_move(const char *pathnameOld, const char *pathnameNew)
 {
     return MoveFileA(pathnameOld, pathnameNew);
 }
 
-
 #else
 
 /* Linux? */
-filehandle_t file_create (const char *pathname, int flags, mode_t mode)
+filehandle_t file_create(const char *pathname, int flags, int mode)
 {
-    int fd = open(pathname, flags | O_CREAT | O_EXCL, (mode));
+    int fd = open(pathname, flags | O_CREAT | O_EXCL, (mode_t)(mode));
     return fd;
 }
 
-filehandle_t file_open_read (const char *pathname)
+filehandle_t file_open_read(const char *pathname)
 {
     int fd = open(pathname, O_RDONLY | O_EXCL, S_IRUSR | S_IRGRP | S_IROTH);
     return fd;
 }
 
-int file_close (filehandle_t *phf)
+int file_close(filehandle_t *phf)
 {
     if (phf) {
         filehandle_t hf = *phf;
@@ -353,12 +386,12 @@ int file_close (filehandle_t *phf)
     return (-1);
 }
 
-int file_readbytes (filehandle_t hf, char *bytesbuf, ub4 sizebuf)
+int file_readbytes(filehandle_t hf, char *bytesbuf, ub4 sizebuf)
 {
     size_t cbread, cboffset = 0;
 
-    while (cboffset != (size_t) sizebuf) {
-        cbread = read(hf, (void*)(bytesbuf + cboffset), (size_t)(sizebuf - cboffset));
+    while (cboffset != (size_t)sizebuf) {
+        cbread = read(hf, (void *)(bytesbuf + cboffset), (size_t)(sizebuf - cboffset));
 
         if (cbread == -1) {
             /* read on error: uses strerror(errno) for more */
@@ -374,17 +407,17 @@ int file_readbytes (filehandle_t hf, char *bytesbuf, ub4 sizebuf)
     }
 
     /* success: actual read bytes */
-    return (int) cboffset;
+    return (int)cboffset;
 }
 
 /* https://linux.die.net/man/2/write */
-int file_writebytes (filehandle_t hf, const char *bytesbuf, ub4 bytestowrite)
+int file_writebytes(filehandle_t hf, const char *bytesbuf, ub4 bytestowrite)
 {
     ssize_t cbret;
     off_t woffset = 0;
 
-    while (woffset != (off_t) bytestowrite) {
-        cbret = write(hf, (const void *) (bytesbuf + woffset), bytestowrite - woffset);
+    while (woffset != (off_t)bytestowrite) {
+        cbret = write(hf, (const void *)(bytesbuf + woffset), bytestowrite - woffset);
 
         if (cbret == -1) {
             /* error */
@@ -400,7 +433,7 @@ int file_writebytes (filehandle_t hf, const char *bytesbuf, ub4 bytestowrite)
     return 0;
 }
 
-int pathfile_exists (const char *pathname)
+int pathfile_exists(const char *pathname)
 {
     if (pathname && access(pathname, F_OK) != -1) {
         /* file exists */
@@ -411,32 +444,31 @@ int pathfile_exists (const char *pathname)
     return 0;
 }
 
-int pathfile_remove (const char *pathname)
+int pathfile_remove(const char *pathname)
 {
     return remove(pathname);
 }
 
-int pathfile_move (const char *pathnameOld, const char *pathnameNew)
+int pathfile_move(const char *pathnameOld, const char *pathnameNew)
 {
     return rename(pathnameOld, pathnameNew);
 }
 
 #endif
 
-
 /**
  * get_proc_abspath
  *   get absolute path for current process.
  */
-cstrbuf get_proc_abspath (void)
+cstrbuf get_proc_abspath(void)
 {
     int r, bufsize = 128;
     char *p,
-         *pathbuf = alloca(bufsize);
+        *pathbuf = alloca(bufsize);
 
 #if defined(__WINDOWS__)
 
-    while ((r = (int) GetModuleFileNameA(0, pathbuf, (DWORD)bufsize)) >= bufsize) {
+    while ((r = (int)GetModuleFileNameA(0, pathbuf, (DWORD)bufsize)) >= bufsize) {
         bufsize += 128;
         pathbuf = alloca(bufsize);
     }
@@ -463,7 +495,7 @@ cstrbuf get_proc_abspath (void)
     pathbuf[r] = '\0';
 
     p = strrchr(pathbuf, PATH_SEPARATOR_CHAR);
-    if (! p) {
+    if (!p) {
         printf("invalid path: %s\n", pathbuf);
         exit(EXIT_FAILURE);
     }
@@ -471,11 +503,10 @@ cstrbuf get_proc_abspath (void)
     *p = 0;
     r = (int)(p - pathbuf);
 
-    return cstrbufNew(r+4, pathbuf, r);
+    return cstrbufNew(r + 4, pathbuf, r);
 }
 
-
-cstrbuf find_config_pathfile (const char *cfgpath, const char *cfgname, const char *envvarname, const char *etcconfpath)
+cstrbuf find_config_pathfile(const char *cfgpath, const char *cfgname, const char *envvarname, const char *etcconfpath)
 {
     cstrbuf config = 0;
     cstrbuf dname = 0;
@@ -494,9 +525,9 @@ cstrbuf find_config_pathfile (const char *cfgpath, const char *cfgname, const ch
             char endchr = cfgpath[pathlen - 1];
 
             if (endchr == PATH_SEPARATOR_CHAR || endchr == '/') {
-                config = cstrbufCat(0, "%.*s%.*s", pathlen, cfgpath, (int)pname->len -1, cfgname);
+                config = cstrbufCat(0, "%.*s%.*s", pathlen, cfgpath, (int)pname->len - 1, cfgname);
             } else {
-                config = cstrbufCat(0, "%.*s%c%.*s", pathlen, cfgpath, PATH_SEPARATOR_CHAR, (int)pname->len -1, cfgname);
+                config = cstrbufCat(0, "%.*s%c%.*s", pathlen, cfgpath, PATH_SEPARATOR_CHAR, (int)pname->len - 1, cfgname);
             }
         }
 
@@ -508,7 +539,13 @@ cstrbuf find_config_pathfile (const char *cfgpath, const char *cfgname, const ch
 
         // 1: "$(appbin_dir)/clogger.cfg"
         config = cstrbufConcat(dname, pname, 0);
-        printf("[misc.c:%d] check config: %.*s\n", __LINE__, cstrbufGetLen(config), cstrbufGetStr(config));
+
+        if (config) {
+            printf("[misc.c:%d] check config: %.*s\n", __LINE__, cstrbufGetLen(config), cstrbufGetStr(config));
+        } else {
+            printf("[misc.c:%d] null config\n", __LINE__);
+        }
+
         if (pathfile_exists(config->str)) {
             goto finish_up;
         }
@@ -527,7 +564,13 @@ cstrbuf find_config_pathfile (const char *cfgpath, const char *cfgname, const ch
         if (p) {
             cstrbufTrunc(config, (ub4)(p - config->str));
             config = cstrbufCat(config, "%cconf%.*s", PATH_SEPARATOR_CHAR, cstrbufGetLen(pname), cstrbufGetStr(pname));
-            printf("[misc.c:%d] check config: %.*s\n", __LINE__, cstrbufGetLen(config), cstrbufGetStr(config));
+
+            if (config) {
+                printf("[misc.c:%d] check config: %.*s\n", __LINE__, cstrbufGetLen(config), cstrbufGetStr(config));
+            } else {
+                printf("[misc.c:%d] null config\n", __LINE__);
+            }
+
             if (pathfile_exists(config->str)) {
                 goto finish_up;
             }
@@ -551,7 +594,7 @@ cstrbuf find_config_pathfile (const char *cfgpath, const char *cfgname, const ch
 
                 endchr = config->str[config->len - 1];
                 if (endchr == PATH_SEPARATOR_CHAR || endchr == '/') {
-                    config = cstrbufCat(config, "%.*s", (int)pname->len -1, cfgname);
+                    config = cstrbufCat(config, "%.*s", (int)pname->len - 1, cfgname);
                 } else {
                     config = cstrbufCat(config, "%.*s", cstrbufGetLen(pname), cstrbufGetStr(pname));
                 }

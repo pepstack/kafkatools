@@ -30,7 +30,7 @@
  * @author     Liang Zhang <350137278@qq.com>
  * @version    0.0.10
  * @create     2017-08-28 11:12:10
- * @update     2020-05-06 22:55:37
+ * @update     2020-06-12 22:55:37
  */
 #ifndef _MISC_H_
 #define _MISC_H_
@@ -45,53 +45,48 @@ extern "C"
 #include "cstrbuf.h"
 
 #if defined(__WINDOWS__)
-    # include <Windows.h>
+#include <Windows.h>
 
     typedef HANDLE filehandle_t;
 
-    # if !defined(HAVE_MODE_T)
-    typedef unsigned int mode_t;
-    # endif
-
-    # define filehandle_invalid  INVALID_HANDLE_VALUE
+#define filehandle_invalid INVALID_HANDLE_VALUE
 #else
-    #include <sys/types.h>
-    # include <sys/stat.h>
-    # include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-    typedef int    filehandle_t;
+typedef int filehandle_t;
 
-    # define filehandle_invalid  ((filehandle_t)(-1))
+#define filehandle_invalid ((filehandle_t)(-1))
 #endif
-
 
 /**
  * time api
  */
-const char * timezone_format (long tz, char *tzfmt);
-long timezone_compute (time_t ts, char *tzfmt);
-int daylight_compute (time_t ts);
-void getnowtimeofday (struct timespec *now);
-void getlocaltime_safe (struct tm *loc, int64_t t, int tz, int dst);
-
+const char *timezone_format(long tz, char *tzfmt);
+long timezone_compute(time_t ts, char *tzfmt);
+int daylight_compute(time_t ts);
+void getnowtimeofday(struct timespec *now);
+void getlocaltime_safe(struct tm *loc, int64_t t, int tz, int dst);
+sb8 difftime_msec(const struct timespec *oldtms, const struct timespec *newtms);
 
 /**
  * file api
  */
-filehandle_t file_create (const char *pathname, int flags, mode_t mode);
-filehandle_t file_open_read (const char *pathname);
-int file_close (filehandle_t *phf);
+filehandle_t file_create(const char *pathname, int flags, int mode);
+filehandle_t file_open_read(const char *pathname);
+int file_close(filehandle_t *phf);
 
-int file_readbytes (filehandle_t hf, char *bytesbuf, ub4 sizebytes);
-int file_writebytes (filehandle_t hf, const char *bytesbuf, ub4 sizebytes);
+int file_readbytes(filehandle_t hf, char *bytesbuf, ub4 sizebytes);
+int file_writebytes(filehandle_t hf, const char *bytesbuf, ub4 sizebytes);
 
-int pathfile_exists (const char *pathname);
-int pathfile_remove (const char *pathname);
+int pathfile_exists(const char *pathname);
+int pathfile_remove(const char *pathname);
 
-int pathfile_move (const char *pathnameOld, const char *pathnameNew);
+int pathfile_move(const char *pathnameOld, const char *pathnameNew);
 
-cstrbuf get_proc_abspath (void);
-cstrbuf find_config_pathfile (const char *cfgpath, const char *cfgname, const char *envvarname, const char *etcconfpath);
+cstrbuf get_proc_abspath(void);
+cstrbuf find_config_pathfile(const char *cfgpath, const char *cfgname, const char *envvarname, const char *etcconfpath);
 
 #ifdef __cplusplus
 }

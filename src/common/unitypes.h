@@ -30,7 +30,7 @@
  * @author     Liang Zhang <350137278@qq.com>
  * @version    0.0.14
  * @create     2019-09-30 12:37:44
- * @update     2020-04-07 23:26:44
+ * @update     2020-06-13 11:26:44
  */
 #ifndef UNITYPES_H_INCLUDED
 #define UNITYPES_H_INCLUDED
@@ -41,6 +41,10 @@ extern "C"
 #endif
 
 #undef _TIMESPEC_DEFINED
+
+#if defined(__MINGW32__) || defined(__MINGW64__)
+    # define __MINGW__   1
+#endif
 
 #if defined(_WIN32)
     # if !defined(__WINDOWS__)
@@ -61,7 +65,7 @@ extern "C"
     # define PATH_SEPARATOR_CHAR       ((char) 92)
 
     # define getprocessid()  ((int)GetCurrentProcessId())
-#elif defined(__CYGWIN__)
+#elif defined(__CYGWIN__) || defined(__MINGW__)
 
     # undef  PATH_SEPARATOR_CHAR
     # define PATH_SEPARATOR_CHAR       ((char) 47)
@@ -171,12 +175,15 @@ extern "C"
 
 #if defined(__WINDOWS__)
     # define _TIMESPEC_DEFINED
+    # define WINDOWS_CRTDBG_ON
 
     # if defined (_MSC_VER)
         // warning C4996: 'vsnprintf': This function or variable may be unsafe.
         // Consider using vsnprintf_s instead.
         //  To disable deprecation, use _CRT_SECURE_NO_WARNINGS
         # pragma warning(disable:4996)
+
+        # undef WINDOWS_CRTDBG_ON
 
         # if defined(_DEBUG)
             /** memory leak auto-detect in MSVC
@@ -186,10 +193,12 @@ extern "C"
             # include <stdlib.h>
             # include <malloc.h>
             # include <crtdbg.h>
+
             # define WINDOWS_CRTDBG_ON  _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
         # else
             # include <stdlib.h>
             # include <malloc.h>
+
             # define WINDOWS_CRTDBG_ON
         # endif
     # endif /* _MSC_VER */

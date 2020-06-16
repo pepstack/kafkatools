@@ -53,8 +53,9 @@ misc.o: $(SRC_DIR)/common/misc.c
 
 
 # produce test app
-produce: $(bintarget) $(SRC_DIR)/produce.c
+produce: $(bintarget) $(SRC_DIR)/produce.c misc.o
 	$(CC) $(CFLAGS) $(INC_DIRS) $(LDFLAGS) $(SRC_DIR)/produce.c -o $@ \
+	misc.o \
 	-lkafkatools
 	-cp $(prefix)/produce $(prefix)/target/
 	-cp $(prefix)/kafka-producer.properties $(prefix)/target/
