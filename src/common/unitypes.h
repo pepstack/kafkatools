@@ -30,7 +30,7 @@
  * @author     Liang Zhang <350137278@qq.com>
  * @version    0.0.14
  * @create     2019-09-30 12:37:44
- * @update     2020-06-13 11:26:44
+ * @update     2020-12-09 17:26:44
  */
 #ifndef UNITYPES_H_INCLUDED
 #define UNITYPES_H_INCLUDED
@@ -40,13 +40,32 @@ extern "C"
 {
 #endif
 
+#ifndef WIN32_LEAN_AND_MEAN
+# define WIN32_LEAN_AND_MEAN
+#endif
+
+#if (defined(_WIN32) || defined(__WIN32__)) && !defined(WIN32) && !defined(__SYMBIAN32__)
+# define WIN32
+#endif
+
+#if defined(WIN32) && !defined(_WIN32_WCE) && !defined(__CYGWIN__)
+# if !(defined(_WINSOCKAPI_) || defined(_WINSOCK_H) || defined(__LWIP_OPT_H__) || defined(LWIP_HDR_OPT_H))
+    /* The check above prevents the winsock2 inclusion if winsock.h already
+     *  was included, since they can't co-exist without problems.
+     */
+#   include <winsock2.h>
+#   include <ws2tcpip.h>
+# endif
+#endif
+
+
 #undef _TIMESPEC_DEFINED
 
 #if defined(__MINGW32__) || defined(__MINGW64__)
     # define __MINGW__   1
 #endif
 
-#if defined(_WIN32)
+#if defined(WIN32)
     # if !defined(__WINDOWS__)
     #   define __WINDOWS__
     # endif
@@ -64,7 +83,6 @@ extern "C"
     # undef  PATH_SEPARATOR_CHAR
     # define PATH_SEPARATOR_CHAR       ((char) 92)
 
-    # define getprocessid()  ((int)GetCurrentProcessId())
 #elif defined(__CYGWIN__) || defined(__MINGW__)
 
     # undef  PATH_SEPARATOR_CHAR
@@ -127,6 +145,7 @@ extern "C"
     # include <string.h>
     # include <assert.h>
     # include <stdarg.h>
+    # include <malloc.h>
 
     # include <float.h>
     # include <limits.h>
@@ -175,33 +194,6 @@ extern "C"
 
 #if defined(__WINDOWS__)
     # define _TIMESPEC_DEFINED
-    # define WINDOWS_CRTDBG_ON
-
-    # if defined (_MSC_VER)
-        // warning C4996: 'vsnprintf': This function or variable may be unsafe.
-        // Consider using vsnprintf_s instead.
-        //  To disable deprecation, use _CRT_SECURE_NO_WARNINGS
-        # pragma warning(disable:4996)
-
-        # undef WINDOWS_CRTDBG_ON
-
-        # if defined(_DEBUG)
-            /** memory leak auto-detect in MSVC
-             * https://blog.csdn.net/lyc201219/article/details/62219503
-             */
-            # define _CRTDBG_MAP_ALLOC
-            # include <stdlib.h>
-            # include <malloc.h>
-            # include <crtdbg.h>
-
-            # define WINDOWS_CRTDBG_ON  _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
-        # else
-            # include <stdlib.h>
-            # include <malloc.h>
-
-            # define WINDOWS_CRTDBG_ON
-        # endif
-    # endif /* _MSC_VER */
 
     /* Type definitions for the basic sized types. */
     # include <basetsd.h>
@@ -225,7 +217,9 @@ extern "C"
     # endif
 
 #else /* non __WINDOWS__ */
-    # define WINDOWS_CRTDBG_ON
+    # ifndef WINDOWS_CRTDBG_ON
+    #   define WINDOWS_CRTDBG_ON
+    # endif
 
     /* DEBUG_PRINT_ENABLED */
     # if !defined (NDEBUG) && defined (DEBUG_PRINT_ENABLED)
@@ -354,7 +348,8 @@ typedef signed char sb1;
 *    been written to the final string if enough space had been available.
 *   Thus, a return value of size or more means that the output was truncated.
 */
-NOWARNING_UNUSED(static) int snprintf_chkd_V1(char *outputbuf, size_t bufsize, const char *format, ...)
+NOWARNING_UNUSED(static)
+int snprintf_chkd_V1(char *outputbuf, size_t bufsize, const char *format, ...)
 {
     int len;
 
@@ -381,7 +376,8 @@ NOWARNING_UNUSED(static) int snprintf_chkd_V1(char *outputbuf, size_t bufsize, c
 *
 *    If exitcode not given (= 0), same as snprintf_safe()
 */
-NOWARNING_UNUSED(static) int snprintf_chkd_V2(int exitcode, char *outputbuf, size_t bufsize, const char *format, ...)
+NOWARNING_UNUSED(static)
+int snprintf_chkd_V2(int exitcode, char *outputbuf, size_t bufsize, const char *format, ...)
 {
     int len;
 
@@ -409,6 +405,7 @@ NOWARNING_UNUSED(static) int snprintf_chkd_V2(int exitcode, char *outputbuf, siz
 
 #define snprintf_V1    snprintf
 
+
 /**
  * The compiler tries to warn you that you lose bits when casting from void *
  *   to int. It doesn't know that the void * is actually an int cast, so the
@@ -424,46 +421,6 @@ NOWARNING_UNUSED(static) int snprintf_chkd_V2(int exitcode, char *outputbuf, siz
 
 #define ptr_cast_to_int64(pv)    ((int64_t) (uint64_t) (void*) (pv))
 #define int64_cast_to_ptr(iv)    ((void*) (uint64_t) (int64_t) (iv))
-
-
-#if !defined(__WINDOWS__)
-    # include <unistd.h>    /* usleep() */
-    # include <sys/time.h>
-    # define _TIMESPEC_DEFINED
-
-    // sleep in milliseconds
-    NOWARNING_UNUSED(static) void sleep_msec(int milliseconds)
-    {
-        if (milliseconds > 0) {
-            struct timespec ts;
-            ts.tv_sec = milliseconds / 1000;
-            ts.tv_nsec = (milliseconds % 1000) * 1000000;
-            nanosleep(&ts, 0);
-        }
-    }
-
-
-    // sleep in micro seconds, do not use usleep
-    NOWARNING_UNUSED(static) void sleep_usec(int us)
-    {
-        if (us > 0) {
-            /**
-            * 1 sec = 1000 ms (millisec)
-            * 1 ms = 1000 us (microsec)
-            * 1 us = 1000 ns (nanosec)
-            * 1 sec = 1000 000 000 ns (nanosec)
-            */
-            struct timespec ts;
-
-            ts.tv_sec = us / 1000000;
-            ts.tv_nsec = (us % 1000000) * 1000;
-
-            nanosleep(&ts, 0);
-        }
-    }
-
-    # define getprocessid()   ((int)getpid())
-#endif
 
 #ifdef __cplusplus
 }

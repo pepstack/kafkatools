@@ -56,6 +56,7 @@ extern "C" {
 /**
  * The C API is also documented in rdkafka.h
  */
+#include <common/mscrtdbg.h>
 #include <common/unitypes.h>
 
 #ifdef __WINDOWS__

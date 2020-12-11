@@ -30,7 +30,7 @@
  * @author     Liang Zhang <350137278@qq.com>
  * @version    0.0.10
  * @create     2017-08-28 11:12:10
- * @update     2020-06-12 17:20:46
+ * @update     2020-12-12 17:20:46
  */
 #ifndef _CSTRBUF_H_
 #define _CSTRBUF_H_
@@ -40,8 +40,9 @@ extern "C"
 {
 #endif
 
-#include "unitypes.h"
 #include "memapi.h"
+#include "unitypes.h"
+
 
 #ifndef cstr_allocate_blocksize
 # define cstr_allocate_blocksize    16

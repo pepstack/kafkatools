@@ -30,7 +30,7 @@
  * @author     Liang Zhang <350137278@qq.com>
  * @version    0.0.10
  * @create     2018-10-25 09:09:10
- * @update     2020-04-03 17:27:33
+ * @update     2020-12-07 10:27:33
  */
 #ifndef MEMAPI_H_INCLUDED
 #define MEMAPI_H_INCLUDED
@@ -40,6 +40,8 @@ extern "C"
 {
 #endif
 
+#include "mscrtdbg.h"
+
 #include <assert.h>  /* assert */
 #include <string.h>  /* memset */
 #include <stdio.h>   /* printf, perror */
@@ -47,17 +49,24 @@ extern "C"
 #include <stdbool.h> /* memset */
 #include <ctype.h>
 #include <stdlib.h>  /* malloc, alloc */
+#include <malloc.h>  /* alloca */
 #include <errno.h>
 
 
 #if defined (_WIN32)
+    # define MEMAPI_ENABLE_ALLOCA    0
+
     /* Microsoft Windows */
-    # pragma warning(push)
-    # pragma warning(disable : 4996)
+    # if !defined(__MINGW__)
+        # pragma warning(push)
+        # pragma warning(disable : 4996)
+    # endif
 #else
+    # define MEMAPI_ENABLE_ALLOCA    1
+
     # ifdef MEMAPI_USE_LIBJEMALLOC
         /* need to link: libjemalloc.a */
-        #  include <jemalloc/jemalloc.h>
+        # include <jemalloc/jemalloc.h>
     # endif
 #endif
 
@@ -82,9 +91,15 @@ extern "C"
 #endif
 
 
+#define memapi_align_bsize(bsz, alignsize)  \
+        ((size_t)((((size_t)(bsz)+(alignsize)-1)/(alignsize))*(alignsize)))
+
+#define memapi_align_psize(psz)  memapi_align_bsize(psz, sizeof(void *))
+
+
 #define memapi_oom_check(p) do { \
         if (!(p)) { \
-            printf("(%s:%d) out of memory.\n", __FILE__, __LINE__); \
+            printf("FATAL: (memapi.h:%d) out of memory.\n", __LINE__); \
             exit(EXIT_FAILURE); \
         } \
     } while(0)
@@ -192,6 +207,43 @@ STATIC_INLINE void mem_free_s (void **pptr)
             free(ptr);
         #endif
         }
+    }
+}
+
+
+typedef struct {
+    void (*freebufcb)(void *);
+    size_t bufsize;
+    char buffer[0];
+} alloca_buf_t;
+
+
+STATIC_INLINE char * alloca_buf_new (size_t smallbufsize)
+{
+    size_t bufsize = memapi_align_psize(smallbufsize);
+    alloca_buf_t *albuf =
+#if MEMAPI_ENABLE_ALLOCA == 1
+        (alloca_buf_t *)alloca(sizeof(alloca_buf_t) + sizeof(char) * bufsize);
+#else
+        NULL;
+#endif
+
+    if (albuf) {
+        albuf->freebufcb = NULL;
+    } else {
+        albuf = (alloca_buf_t *) mem_alloc_unset(sizeof(alloca_buf_t) + sizeof(char) * bufsize);
+        albuf->freebufcb = mem_free;
+    }
+    albuf->bufsize = bufsize;
+    return (char *)albuf->buffer;
+}
+
+
+STATIC_INLINE void alloca_buf_free (char *buffer)
+{
+    alloca_buf_t *albuf = (alloca_buf_t *)(buffer - sizeof(alloca_buf_t));
+    if (albuf->freebufcb) {
+        albuf->freebufcb(albuf);
     }
 }
 

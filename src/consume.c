@@ -113,6 +113,8 @@ static void consume_message (rd_kafka_message_t *rkmessage, void *opaque)
  */
 int main (int argc, char *argv[])
 {
+    WINDOWS_CRTDBG_ON
+
     int ret, err;
 
     kt_consumer consumer;

@@ -45,6 +45,9 @@
     <ClInclude Include="..\src\common\misc.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\common\mscrtdbg.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\kafkatools_consumer.c">
@@ -57,9 +60,6 @@
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="..\src\common\red_black_tree.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\common\misc.c">
       <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>

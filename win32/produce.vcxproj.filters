@@ -9,9 +9,6 @@
     <ClCompile Include="..\src\produce.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\common\misc.c">
-      <Filter>src</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\kafka-producer.properties" />

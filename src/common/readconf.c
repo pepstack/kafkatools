@@ -65,7 +65,7 @@ NOWARNING_UNUSED(static) char * trim(char *s, char c)
 
 NOWARNING_UNUSED(static) char * trim_whitespace (char * s)
 {
-    return (*s==0)?s:((( ! isspace(*s) )?(((trim_whitespace(s+1)-1)==s)? s : (*(trim_whitespace(s+1)-1)=*s, *s=32 ,trim_whitespace(s+1))):trim_whitespace(s+1)));
+    return (*s==0)?s:((( ! isspace((int)*s) )?(((trim_whitespace(s+1)-1)==s)? s : (*(trim_whitespace(s+1)-1)=*s, *s=32 ,trim_whitespace(s+1))):trim_whitespace(s+1)));
 }
 
 

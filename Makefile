@@ -28,7 +28,7 @@ all: $(bintarget)
 	-ln -sf $(bintarget) $(prefix)/target/$(binname).so
 
 
-$(bintarget): kafkatools_consumer.o kafkatools_producer.o red_black_tree.o readconf.o misc.o
+$(bintarget): kafkatools_consumer.o kafkatools_producer.o red_black_tree.o readconf.o
 	$(CC) $(CFLAGS) -shared \
 		-Wl,--soname=$(binsoname) \
 		-Wl,--rpath='$(prefix):$(prefix)/lib:$(prefix)/libs/lib' \
@@ -48,14 +48,10 @@ red_black_tree.o: $(SRC_DIR)/common/red_black_tree.c
 readconf.o: $(SRC_DIR)/common/readconf.c
 	$(CC) $(CFLAGS) $(INC_DIRS) -c $(SRC_DIR)/common/readconf.c -o $@
 
-misc.o: $(SRC_DIR)/common/misc.c
-	$(CC) $(CFLAGS) $(INC_DIRS) -c $(SRC_DIR)/common/misc.c -o $@
-
 
 # produce test app
-produce: $(bintarget) $(SRC_DIR)/produce.c misc.o
+produce: $(bintarget) $(SRC_DIR)/produce.c
 	$(CC) $(CFLAGS) $(INC_DIRS) $(LDFLAGS) $(SRC_DIR)/produce.c -o $@ \
-	misc.o \
 	-lkafkatools
 	-cp $(prefix)/produce $(prefix)/target/
 	-cp $(prefix)/kafka-producer.properties $(prefix)/target/

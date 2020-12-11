@@ -77,6 +77,8 @@ static void producer_notify_state (rd_kafka_t *rk, const rd_kafka_message_t *rkm
 
 int main (int argc, char *argv[])
 {
+    WINDOWS_CRTDBG_ON
+
     int i, ret;
 
     struct timespec t1, t2;

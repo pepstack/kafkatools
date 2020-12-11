@@ -140,7 +140,7 @@ NOWARNING_UNUSED(static) void RWLockInit (ThreadRWLock_t *lock)
     memset(lock, 0, sizeof(*lock));
 
 #if defined(_WIN32)
-    HMODULE hModule = GetModuleHandleA("kernel32.dll");
+    HMODULE hModule = GetModuleHandle("kernel32.dll");
     if (hModule) {
         lock->lpfnInitializeSRWLock  = (LPFN_SRWLOCK_API)      GetProcAddress(hModule, "InitializeSRWLock");
         if (lock->lpfnInitializeSRWLock) {
